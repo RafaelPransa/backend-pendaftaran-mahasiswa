@@ -1,10 +1,14 @@
 // Panggil library
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
+
+// Panggil konfigurasi database
+const db = require('./src/config/db');
 
 // Inisialisasi express
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 5000;
 
 // Aktifkan CORS agar front-end bisa mengakses API
 app.use(cors());
@@ -18,6 +22,6 @@ app.get('/', (req, res) => {
 });
 
 // Menjalankan server
-app.listen(port, () => {
-  console.log(`Server backend berjalan di http://localhost:${port}`);
+app.listen(PORT, () => {
+  console.log(`Server backend berjalan di http://localhost:${PORT}`);
 });
