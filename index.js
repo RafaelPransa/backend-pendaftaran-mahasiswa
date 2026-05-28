@@ -4,7 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Panggil konfigurasi database
-const db = require('./src/config/db');
+// const db = require('./src/config/db');
 
 // Inisialisasi express
 const app = express();
@@ -15,6 +15,10 @@ app.use(cors());
 
 // Izinkan express untuk membaca data format JSON dari front-end
 app.use(express.json());
+
+// Panggil dan daftarkan route auth
+const authRoutes = require('./src/routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 // Membuat rute API pertama
 app.get('/', (req, res) => {
