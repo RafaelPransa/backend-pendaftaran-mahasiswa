@@ -5,5 +5,6 @@ const authController = require('../controllers/authController');
 // Endpoint: POST /api/auth/register
 // Fungsi: Menerima pendaftaran akun baru
 router.post('/register', authController.register);
+router.post('/login', authController.login);
 
 module.exports = router;
