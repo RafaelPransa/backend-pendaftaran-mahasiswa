@@ -20,6 +20,9 @@ app.use(express.json());
 const authRoutes = require('./src/routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
+const biodataRoutes = require('./src/routes/biodataRoutes');
+app.use('/api', biodataRoutes);
+
 // Membuat rute API pertama
 app.get('/', (req, res) => {
   res.send('Halo server backend sudah berjalan.');
