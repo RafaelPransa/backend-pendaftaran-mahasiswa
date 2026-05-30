@@ -7,13 +7,43 @@ const jwt = require('jsonwebtoken');
 // Fungsi register
 exports.register = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { nama_lengkap, nik, nomor_wa, email, password } = req.body;
 
     // Validasi input dasar
-    if (!email || !password) {
+    if (!nama_lengkap || !nik || !nomor_wa || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Email dan password wajib diisi!',
+        message: 'Semua inputan wajib diisi!',
+      });
+    }
+
+    if (
+      typeof nama_lengkap !== 'string' ||
+      typeof nik !== 'string' ||
+      typeof nomor_wa !== 'string' ||
+      typeof email !== 'string'
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: 'Format data input tidak valid!',
+      });
+    }
+
+    // Validasi format email menggunakan Regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Format email tidak valid!',
+      });
+    }
+
+    // Validasi panjang NIK & pastikan isinya murni angka
+    const numericRegex = /^[0-9]+$/;
+    if (nik.length !== 16 || !numericRegex.test(nik)) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIK harus berisi tepat 16 digit angka!',
       });
     }
 
@@ -26,6 +56,15 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Pengecekan apakah nik sudah terdaftar di database
+    const nikExist = await db('users').where({ nik }).first();
+    if (nikExist) {
+      return res.status(409).json({
+        success: false,
+        message: 'Nik sudah terdaftar. Harap gunakan nik anda sendiri.',
+      });
+    }
+
     // Amankan password menggunakan bcryot (salt rounds 10 sesuai standar indrustri)
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -33,7 +72,10 @@ exports.register = async (req, res) => {
     // PostgreSQL akan otomatis men-generate UUID karena sudah set DEFAULT di migrasi
     const [insertedUser] = await db('users')
       .insert({
-        email,
+        nama_lengkap: nama_lengkap.trim(),
+        nik,
+        nomor_wa,
+        email: email.toLocaleLowerCase().trim(),
         password: hashedPassword,
         role: 'student',
       })
@@ -41,6 +83,9 @@ exports.register = async (req, res) => {
 
     const newUser = {
       id: insertedUser.id,
+      nama_lengkap: insertedUser.nama_lengkap,
+      nik: insertedUser.nik,
+      nomor_wa: insertedUser.nomor_wa,
       email: insertedUser.email,
       role: insertedUser.role,
       created_at: insertedUser.created_at,
