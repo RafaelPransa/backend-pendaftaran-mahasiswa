@@ -1,2 +1,18 @@
-node_modules
+# Dependency Node.js
+node_modules/
+
+# Kredensial dan Environment Variables (SANGAT SENSITIF)
 .env
+.env.local
+
+# Log sistem
+*.log
+npm-debug.log*
+
+# File Upload Pengguna (Aman dari kebocoran data KTP/KK)
+src/public/uploads/
+
+# IDE / Text Editor / OS config
+.vscode/
+.DS_Store
+Thumbs.db
