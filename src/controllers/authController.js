@@ -7,43 +7,76 @@ const jwt = require('jsonwebtoken');
 // Fungsi register
 exports.register = async (req, res) => {
   try {
-    const { nama_lengkap, nik, nomor_wa, email, password } = req.body;
+    const {
+      nama_lengkap,
+      nik,
+      nomor_wa,
+      email,
+      password,
+      konfirmasi_password,
+    } = req.body;
 
-    // Validasi input dasar
-    if (!nama_lengkap || !nik || !nomor_wa || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Semua inputan wajib diisi!',
-      });
-    }
+    // Wadah penampung validasi error
+    const errors = {};
 
+    // ==========================================
+    // VALIDASI INPUT DARI FRONTEND
+    // ==========================================
+
+    // Validasi nama lengkap
     if (
+      !nama_lengkap ||
       typeof nama_lengkap !== 'string' ||
-      typeof nik !== 'string' ||
-      typeof nomor_wa !== 'string' ||
-      typeof email !== 'string'
+      nama_lengkap.trim() === ''
     ) {
-      return res.status(400).json({
-        success: false,
-        message: 'Format data input tidak valid!',
-      });
+      errors.nama_lengkap =
+        'Nama lengkap wajib diisi dengan format teks yang benar.';
     }
 
-    // Validasi format email menggunakan Regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Format email tidak valid!',
-      });
+    // Validasi NIK
+    if (!nik) {
+      errors.nik = 'NIK wajib diisi.';
+    } else {
+      const numericRegex = /^[0-9]+$/;
+      if (nik.length !== 16 || !numericRegex.test(nik)) {
+        errors.nik = 'NIK harus berisi tepat 16 digit.';
+      }
     }
 
-    // Validasi panjang NIK & pastikan isinya murni angka
-    const numericRegex = /^[0-9]+$/;
-    if (nik.length !== 16 || !numericRegex.test(nik)) {
+    // Validasi Nomor WhatsApp
+    if (!nomor_wa || typeof nomor_wa !== 'string' || nomor_wa.trim() === '') {
+      errors.nomor_wa = 'Nomor WhatsApp wajib diisi.';
+    }
+
+    // Validasi Email
+    if (!email) {
+      errors.email = 'Email wajib diisi.';
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        errors.email = 'Format email tidak valid.';
+      }
+    }
+
+    // Validasi Password
+    if (!password || password.length < 6) {
+      errors.password = 'Password wajib diisi dan minimal harus 6 karakter.';
+    }
+
+    // Validasi Konfirmasi Password
+    if (!konfirmasi_password) {
+      errors.konfirmasi_password = 'Konfirmasi password wajib diisi.';
+    } else if (password !== konfirmasi_password) {
+      errors.konfirmasi_password =
+        'Konfirmasi password tidak cocok dengan password utama!';
+    }
+
+    // JIKA ADA ERROR VALIDASI: Stop proses, langsung kembalikan daftar error
+    if (Object.keys(errors).length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'NIK harus berisi tepat 16 digit angka!',
+        message: 'Validasi pendaftaran akun gagal! Periksa kembali data Anda.',
+        errors: errors,
       });
     }
 
@@ -52,7 +85,8 @@ exports.register = async (req, res) => {
     if (userExist) {
       return res.status(409).json({
         success: false,
-        message: 'Email sudah terdaftar, gunakan email lain.',
+        message: 'Validasi pendaftaran akun gagal.',
+        errors: { email: 'Email sudah terdaftar, gunakan email lain.' },
       });
     }
 
@@ -61,9 +95,14 @@ exports.register = async (req, res) => {
     if (nikExist) {
       return res.status(409).json({
         success: false,
-        message: 'Nik sudah terdaftar. Harap gunakan nik anda sendiri.',
+        message: 'Validasi pendaftaran akun gagal.',
+        errors: { nik: 'NIK sudah terdaftar. Harap gunakan NIK anda sendiri.' },
       });
     }
+
+    // ==========================================
+    // PROSES EKSEKUSI & PENYIMPANAN DATA
+    // ==========================================
 
     // Amankan password menggunakan bcryot (salt rounds 10 sesuai standar indrustri)
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -81,6 +120,7 @@ exports.register = async (req, res) => {
       })
       .returning(['*']);
 
+    // Proteksi data sensitif, (jangan pulangkan password ke frontend!)
     const newUser = {
       id: insertedUser.id,
       nama_lengkap: insertedUser.nama_lengkap,
