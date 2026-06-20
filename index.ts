@@ -7,6 +7,7 @@ import cors from 'cors';
 import authRoutes from './src/routes/authRoutes';
 import biodataRoutes from './src/routes/biodataRoutes';
 import dokumenRoutes from './src/routes/dokumenRoutes';
+import portalRoutes from './src/routes/portalRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +22,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/biodata', biodataRoutes);
 app.use('/api/dokumen', dokumenRoutes);
+app.use('/api/portal', portalRoutes);
 
 // Membuat rute API pertama
 app.get('/', (req, res) => {
