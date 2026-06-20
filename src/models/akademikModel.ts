@@ -33,6 +33,14 @@ export async function getDashboardData(userId: string): Promise<any> {
 
   const ipk = totalSksLulus > 0 ? parseFloat((totalBobot / totalSksLulus).toFixed(2)) : 0.0;
 
+  // Cari semester aktif dinamis berdasarkan data KRS dan KHS
+  const maxKrs = await db('krs').where('user_id', userId).max('semester as max_sem').first();
+  const maxKhs = await db('khs').where('user_id', userId).max('semester as max_sem').first();
+  
+  const krsSem = parseInt(maxKrs?.max_sem as string || '0', 10);
+  const khsSem = parseInt(maxKhs?.max_sem as string || '0', 10);
+  const semesterAktif = Math.max(krsSem, khsSem + 1, 1);
+
   // Pengumuman Akademik
   const pengumuman = [
     { id: 1, judul: 'Pemilihan KRS Semester Ganjil 2026/2027', tanggal: '2026-06-20', konten: 'Pengisian KRS dimulai dari tanggal 22 Juni s.d. 30 Juni 2026.' },
@@ -43,7 +51,7 @@ export async function getDashboardData(userId: string): Promise<any> {
     ipk,
     total_sks: totalSksLulus,
     sks_aktif: totalSksAmbil,
-    semester_aktif: 6, // Asumsi Semester 6 sesuai data user
+    semester_aktif: semesterAktif,
     pengumuman
   };
 }
