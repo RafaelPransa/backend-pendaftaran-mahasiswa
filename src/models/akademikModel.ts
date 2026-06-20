@@ -188,3 +188,38 @@ export async function getKhsBySemester(userId: string, semester: number): Promis
     nilai: listKhs
   };
 }
+
+// Feature 4: Transkrip Nilai
+export async function getTranskripData(userId: string): Promise<any> {
+  const grades = await db('khs')
+    .join('matakuliah', 'khs.matakuliah_id', 'matakuliah.id')
+    .select(
+      'khs.id as khs_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'khs.semester',
+      'khs.nilai_angka',
+      'khs.nilai_huruf'
+    )
+    .orderBy('khs.semester', 'asc')
+    .where('khs.user_id', userId);
+
+  let totalBobot = 0;
+  let totalSks = 0;
+
+  grades.forEach((item) => {
+    const nilai = parseFloat(item.nilai_angka as string);
+    const sks = parseInt(item.sks as string, 10);
+    totalBobot += nilai * sks;
+    totalSks += sks;
+  });
+
+  const ipk = totalSks > 0 ? parseFloat((totalBobot / totalSks).toFixed(2)) : 0.0;
+
+  return {
+    ipk,
+    total_sks: totalSks,
+    nilai: grades
+  };
+}

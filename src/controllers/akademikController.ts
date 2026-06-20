@@ -162,3 +162,31 @@ export async function getKhs(req: Request, res: Response): Promise<Response> {
     });
   }
 }
+
+// Feature 4: Transkrip Nilai
+// GET /api/akademik/transkrip
+export async function getTranskrip(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const data = await AkademikModel.getTranskripData(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil Transkrip Nilai kumulatif.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil transkrip:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}

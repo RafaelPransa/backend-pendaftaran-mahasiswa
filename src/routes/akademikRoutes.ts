@@ -21,4 +21,8 @@ router.post('/krs', authenticateToken, akademikController.simpanKrs);
 // Endpoint: GET /api/akademik/khs
 router.get('/khs', authenticateToken, akademikController.getKhs);
 
+// Feature 4: Transkrip Nilai
+// Endpoint: GET /api/akademik/transkrip
+router.get('/transkrip', authenticateToken, akademikController.getTranskrip);
+
 export default router;
