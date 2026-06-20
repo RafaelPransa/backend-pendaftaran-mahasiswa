@@ -48,10 +48,20 @@ export async function getJadwal(): Promise<any[]> {
     .select('gelombang', 'tanggal_mulai', 'tanggal_selesai', 'status')
     .orderBy('tanggal_mulai', 'asc');
   
+  const formatDate = (d: any) => {
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return d;
+  };
+
   return rows.map((r) => ({
     gelombang: r.gelombang,
-    tanggal_mulai: r.tanggal_mulai instanceof Date ? r.tanggal_mulai.toISOString().split('T')[0] : r.tanggal_mulai,
-    tanggal_selesai: r.tanggal_selesai instanceof Date ? r.tanggal_selesai.toISOString().split('T')[0] : r.tanggal_selesai,
+    tanggal_mulai: formatDate(r.tanggal_mulai),
+    tanggal_selesai: formatDate(r.tanggal_selesai),
     status: r.status,
   }));
 }
