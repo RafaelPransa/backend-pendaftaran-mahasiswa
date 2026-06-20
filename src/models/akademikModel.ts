@@ -154,3 +154,37 @@ export async function enrollKrs(
       .where({ 'krs.user_id': userId, 'krs.semester': semester, 'krs.tahun_akademik': tahunAkademik });
   });
 }
+
+// Feature 3: KHS (Kartu Hasil Studi)
+export async function getKhsBySemester(userId: string, semester: number): Promise<any> {
+  const listKhs = await db('khs')
+    .join('matakuliah', 'khs.matakuliah_id', 'matakuliah.id')
+    .select(
+      'khs.id as khs_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'khs.nilai_angka',
+      'khs.nilai_huruf'
+    )
+    .where({ 'khs.user_id': userId, 'khs.semester': semester });
+
+  let totalBobot = 0;
+  let totalSks = 0;
+
+  listKhs.forEach((item) => {
+    const nilai = parseFloat(item.nilai_angka as string);
+    const sks = parseInt(item.sks as string, 10);
+    totalBobot += nilai * sks;
+    totalSks += sks;
+  });
+
+  const ips = totalSks > 0 ? parseFloat((totalBobot / totalSks).toFixed(2)) : 0.0;
+
+  return {
+    semester,
+    ips,
+    total_sks: totalSks,
+    nilai: listKhs
+  };
+}

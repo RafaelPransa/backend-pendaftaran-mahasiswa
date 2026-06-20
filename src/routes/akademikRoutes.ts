@@ -17,4 +17,8 @@ router.get('/krs', authenticateToken, akademikController.getKrs);
 // Endpoint: POST /api/akademik/krs
 router.post('/krs', authenticateToken, akademikController.simpanKrs);
 
+// Feature 3: KHS (Kartu Hasil Studi)
+// Endpoint: GET /api/akademik/khs
+router.get('/khs', authenticateToken, akademikController.getKhs);
+
 export default router;

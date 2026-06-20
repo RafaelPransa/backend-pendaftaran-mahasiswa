@@ -117,3 +117,48 @@ export async function simpanKrs(req: Request, res: Response): Promise<Response> 
     });
   }
 }
+
+// Feature 3: KHS (Kartu Hasil Studi)
+// GET /api/akademik/khs
+export async function getKhs(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const semesterStr = req.query.semester;
+
+    if (!semesterStr) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query parameter semester wajib disertakan!',
+      });
+    }
+
+    const semester = parseInt(semesterStr as string, 10);
+    if (isNaN(semester)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter semester harus berupa angka!',
+      });
+    }
+
+    const data = await AkademikModel.getKhsBySemester(userId, semester);
+
+    return res.status(200).json({
+      success: true,
+      message: `Berhasil mengambil KHS untuk semester ${semester}.`,
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil KHS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
