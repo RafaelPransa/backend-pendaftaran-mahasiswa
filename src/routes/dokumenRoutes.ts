@@ -5,6 +5,9 @@ import upload from '../middlewares/uploadMiddleware';
 
 const router = Router();
 
+// Endpoint: GET /api/dokumen
+router.get('/', authenticateToken, dokumenController.getDokumen);
+
 // Endpoint: POST /api/dokumen
 // Pengecekan: JWT terus ke Multer menangkap 4 field file
 router.post(

@@ -41,3 +41,37 @@ export async function getPendaftaranStats(): Promise<any> {
     lulus: parseInt(lulus?.count as string || '0', 10),
   };
 }
+
+// Mendapatkan daftar jadwal PMB dari database
+export async function getJadwal(): Promise<any[]> {
+  const rows = await db('pmb_jadwal')
+    .select('gelombang', 'tanggal_mulai', 'tanggal_selesai', 'status')
+    .orderBy('tanggal_mulai', 'asc');
+  
+  const formatDate = (d: any) => {
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return d;
+  };
+
+  return rows.map((r) => ({
+    gelombang: r.gelombang,
+    tanggal_mulai: formatDate(r.tanggal_mulai),
+    tanggal_selesai: formatDate(r.tanggal_selesai),
+    status: r.status,
+  }));
+}
+
+// Mendapatkan daftar persyaratan PMB dari database
+export async function getPersyaratan(): Promise<string[]> {
+  const rows = await db('pmb_persyaratan')
+    .select('deskripsi')
+    .orderBy('created_at', 'asc');
+  
+  return rows.map((r) => r.deskripsi);
+}
+

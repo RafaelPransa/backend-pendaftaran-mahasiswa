@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 
 // Panggil konfigurasi database jika diperlukan untuk pre-connect
 // import './src/config/db';
@@ -18,6 +19,9 @@ app.use(cors());
 
 // Izinkan express untuk membaca data format JSON dari front-end
 app.use(express.json());
+
+// Serve folder uploads secara statis agar bisa diakses oleh front-end
+app.use('/uploads', express.static(path.join(__dirname, 'src/public/uploads')));
 
 // Daftarkan route
 app.use('/api/auth', authRoutes);

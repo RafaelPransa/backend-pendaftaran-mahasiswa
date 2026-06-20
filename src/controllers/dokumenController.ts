@@ -68,3 +68,37 @@ export async function uploadBerkas(req: Request, res: Response): Promise<Respons
     });
   }
 }
+
+// GET /api/dokumen
+export async function getDokumen(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const dokumen = await DokumenModel.findByUserId(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil dokumen persyaratan.',
+      data: dokumen || {
+        user_id: userId,
+        ktp: null,
+        kartu_keluarga: null,
+        ijazah_skl: null,
+        pas_foto: null,
+      },
+    });
+  } catch (error) {
+    console.error('Error saat mengambil dokumen:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal pada server saat mengambil dokumen.',
+    });
+  }
+}
+

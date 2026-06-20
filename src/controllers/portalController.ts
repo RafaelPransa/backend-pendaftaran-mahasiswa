@@ -25,19 +25,9 @@ export async function getBerandaStats(req: Request, res: Response): Promise<Resp
 // 2. GET /api/portal/informasi
 export async function getInformasiJadwal(req: Request, res: Response): Promise<Response> {
   try {
-    // Data Informasi & Jadwal Seleksi PMB
-    const jadwalPendaftaran = [
-      { gelombang: 'Gelombang 1', tanggal_mulai: '2026-01-01', tanggal_selesai: '2026-03-31', status: 'Selesai' },
-      { gelombang: 'Gelombang 2', tanggal_mulai: '2026-04-01', tanggal_selesai: '2026-06-30', status: 'Aktif' },
-      { gelombang: 'Gelombang 3', tanggal_mulai: '2026-07-01', tanggal_selesai: '2026-08-31', status: 'Mendatang' },
-    ];
-
-    const persyaratanPendaftaran = [
-      'Scan Kartu Tanda Penduduk (KTP)',
-      'Scan Kartu Keluarga (KK)',
-      'Scan Ijazah Terakhir / Surat Keterangan Lulus (SKL)',
-      'Pas Foto 4x6 latar belakang merah (format JPG/PNG)',
-    ];
+    // Ambil data Informasi & Jadwal Seleksi PMB dari database
+    const jadwalPendaftaran = await PortalModel.getJadwal();
+    const persyaratanPendaftaran = await PortalModel.getPersyaratan();
 
     return res.status(200).json({
       success: true,
