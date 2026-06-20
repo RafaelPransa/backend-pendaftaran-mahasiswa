@@ -223,3 +223,31 @@ export async function getTranskripData(userId: string): Promise<any> {
     nilai: grades
   };
 }
+
+// Feature 5: Keuangan (Tagihan UKT)
+export interface KeuanganRecord {
+  id: string;
+  user_id: string;
+  semester: number;
+  tagihan: number;
+  status: 'belum_bayar' | 'lunas';
+  tanggal_bayar: Date | null;
+}
+
+export async function getKeuanganByUserId(userId: string): Promise<any[]> {
+  return await db('keuangan')
+    .select('id', 'semester', 'tagihan', 'status', 'tanggal_bayar')
+    .where({ user_id: userId })
+    .orderBy('semester', 'desc');
+}
+
+export async function payUkt(userId: string, semester: number): Promise<any> {
+  const [updatedRecord] = await db('keuangan')
+    .where({ user_id: userId, semester })
+    .update({
+      status: 'lunas',
+      tanggal_bayar: new Date()
+    })
+    .returning('*');
+  return updatedRecord;
+}

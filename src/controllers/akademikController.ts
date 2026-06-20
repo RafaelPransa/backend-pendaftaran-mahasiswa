@@ -190,3 +190,81 @@ export async function getTranskrip(req: Request, res: Response): Promise<Respons
     });
   }
 }
+
+// Feature 5: Keuangan (Tagihan UKT)
+// GET /api/akademik/keuangan
+export async function getKeuangan(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const data = await AkademikModel.getKeuanganByUserId(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil informasi keuangan mahasiswa.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil keuangan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// POST /api/akademik/keuangan/bayar
+export async function bayarUkt(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const { semester } = req.body;
+
+    if (!semester) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter semester wajib disertakan untuk melakukan pembayaran!',
+      });
+    }
+
+    const semesterNum = parseInt(semester as string, 10);
+    if (isNaN(semesterNum)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter semester harus berupa angka!',
+      });
+    }
+
+    const record = await AkademikModel.payUkt(userId, semesterNum);
+    if (!record) {
+      return res.status(404).json({
+        success: false,
+        message: `Tagihan keuangan untuk semester ${semesterNum} tidak ditemukan!`,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Pembayaran UKT semester ${semesterNum} berhasil!`,
+      data: record
+    });
+  } catch (error) {
+    console.error('Error saat membayar UKT:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server saat melakukan pembayaran.',
+    });
+  }
+}

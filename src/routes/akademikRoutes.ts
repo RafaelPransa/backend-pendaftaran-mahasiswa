@@ -25,4 +25,11 @@ router.get('/khs', authenticateToken, akademikController.getKhs);
 // Endpoint: GET /api/akademik/transkrip
 router.get('/transkrip', authenticateToken, akademikController.getTranskrip);
 
+// Feature 5: Keuangan (Tagihan UKT)
+// Endpoint: GET /api/akademik/keuangan
+router.get('/keuangan', authenticateToken, akademikController.getKeuangan);
+
+// Endpoint: POST /api/akademik/keuangan/bayar
+router.post('/keuangan/bayar', authenticateToken, akademikController.bayarUkt);
+
 export default router;
