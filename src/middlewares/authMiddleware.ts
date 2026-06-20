@@ -50,10 +50,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
 export const authenticateRoles = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     // req.user didapatkan dari hasil lolos middleware umum di atas
-    // Catatan: Kami tetap mempertahankan perilaku asli yang langsung mengembalikan 403
-    return res.status(403).json({
-      success: false,
-      message: 'Akses dilarang. Anda tidak memiliki izin untuk mengakses fitur ini!',
-    });
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses dilarang. Anda tidak memiliki izin untuk mengakses fitur ini!',
+      });
+    }
+    next();
   };
 };
