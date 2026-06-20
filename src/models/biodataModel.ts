@@ -26,3 +26,12 @@ export async function create(biodataData: Biodata): Promise<any> {
 export async function findByUserId(userId: string): Promise<any> {
   return await db('biodata').where({ user_id: userId }).first();
 }
+
+// Fungsi untuk memperbarui data biodata berdasarkan user_id
+export async function update(userId: string, biodataData: Partial<Biodata>): Promise<any> {
+  const [updatedBiodata] = await db('biodata')
+    .where({ user_id: userId })
+    .update(biodataData)
+    .returning('*');
+  return updatedBiodata;
+}
