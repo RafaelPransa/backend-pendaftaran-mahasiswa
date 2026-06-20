@@ -251,3 +251,96 @@ export async function payUkt(userId: string, semester: number): Promise<any> {
     .returning('*');
   return updatedRecord;
 }
+
+// Feature 6: Forum Diskusi
+
+export interface ThreadData {
+  user_id: string;
+  judul: string;
+  konten: string;
+  kategori: string;
+}
+
+export interface ReplyData {
+  thread_id: string;
+  user_id: string;
+  konten: string;
+}
+
+// Membuat thread baru
+export async function createThread(threadData: ThreadData): Promise<any> {
+  const [newThread] = await db('forum_threads').insert(threadData).returning('*');
+  return newThread;
+}
+
+// Mendapatkan daftar thread (opsional filter kategori)
+export async function getThreads(kategori?: string): Promise<any[]> {
+  const query = db('forum_threads')
+    .join('users', 'forum_threads.user_id', 'users.id')
+    .select(
+      'forum_threads.id as thread_id',
+      'forum_threads.judul',
+      'forum_threads.konten',
+      'forum_threads.kategori',
+      'users.nama_lengkap as pembuat',
+      'users.role as pembuat_role',
+      'forum_threads.created_at'
+    )
+    .orderBy('forum_threads.created_at', 'desc');
+
+  if (kategori) {
+    query.where('forum_threads.kategori', kategori);
+  }
+
+  // Hitung jumlah balasan per thread secara paralel
+  const threads = await query;
+  const replyCounts = await db('forum_replies')
+    .select('thread_id')
+    .count('id as count')
+    .groupBy('thread_id');
+
+  const countMap = new Map(replyCounts.map((rc) => [rc.thread_id, parseInt(rc.count as string || '0', 10)]));
+
+  return threads.map((t) => ({
+    ...t,
+    jumlah_balasan: countMap.get(t.thread_id) || 0
+  }));
+}
+
+// Mendapatkan detail thread tunggal
+export async function getThreadById(threadId: string): Promise<any> {
+  return await db('forum_threads')
+    .join('users', 'forum_threads.user_id', 'users.id')
+    .select(
+      'forum_threads.id as thread_id',
+      'forum_threads.judul',
+      'forum_threads.konten',
+      'forum_threads.kategori',
+      'users.nama_lengkap as pembuat',
+      'users.role as pembuat_role',
+      'forum_threads.created_at'
+    )
+    .where('forum_threads.id', threadId)
+    .first();
+}
+
+// Mendapatkan daftar balasan thread
+export async function getThreadReplies(threadId: string): Promise<any[]> {
+  return await db('forum_replies')
+    .join('users', 'forum_replies.user_id', 'users.id')
+    .select(
+      'forum_replies.id as reply_id',
+      'forum_replies.konten',
+      'users.nama_lengkap as pembuat',
+      'users.role as pembuat_role',
+      'forum_replies.created_at'
+    )
+    .where('forum_replies.thread_id', threadId)
+    .orderBy('forum_replies.created_at', 'asc');
+}
+
+// Menambahkan balasan baru
+export async function createReply(replyData: ReplyData): Promise<any> {
+  const [newReply] = await db('forum_replies').insert(replyData).returning('*');
+  return newReply;
+}

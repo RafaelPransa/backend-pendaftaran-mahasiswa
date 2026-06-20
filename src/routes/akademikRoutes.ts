@@ -32,4 +32,17 @@ router.get('/keuangan', authenticateToken, akademikController.getKeuangan);
 // Endpoint: POST /api/akademik/keuangan/bayar
 router.post('/keuangan/bayar', authenticateToken, akademikController.bayarUkt);
 
+// Feature 6: Forum Diskusi
+// Endpoint: POST /api/akademik/forum/threads
+router.post('/forum/threads', authenticateToken, akademikController.buatThread);
+
+// Endpoint: GET /api/akademik/forum/threads
+router.get('/forum/threads', authenticateToken, akademikController.ambilSemuaThread);
+
+// Endpoint: GET /api/akademik/forum/threads/:id
+router.get('/forum/threads/:id', authenticateToken, akademikController.ambilDetailThread);
+
+// Endpoint: POST /api/akademik/forum/threads/:id/replies
+router.post('/forum/threads/:id/replies', authenticateToken, akademikController.buatBalasan);
+
 export default router;

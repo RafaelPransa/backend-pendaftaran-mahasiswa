@@ -268,3 +268,148 @@ export async function bayarUkt(req: Request, res: Response): Promise<Response> {
     });
   }
 }
+
+// Feature 6: Forum Diskusi
+
+// POST /api/akademik/forum/threads
+export async function buatThread(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const { judul, konten, kategori } = req.body;
+
+    if (!judul || !konten || !kategori) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kolom judul, konten, dan kategori wajib diisi!',
+      });
+    }
+
+    const newThread = await AkademikModel.createThread({
+      user_id: userId,
+      judul,
+      konten,
+      kategori
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Thread diskusi baru berhasil dibuat!',
+      data: newThread
+    });
+  } catch (error) {
+    console.error('Error saat membuat thread:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server saat membuat thread.',
+    });
+  }
+}
+
+// GET /api/akademik/forum/threads
+export async function ambilSemuaThread(req: Request, res: Response): Promise<Response> {
+  try {
+    const kategori = req.query.kategori as string | undefined;
+    const threads = await AkademikModel.getThreads(kategori);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar thread diskusi.',
+      data: threads
+    });
+  } catch (error) {
+    console.error('Error saat mengambil threads:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// GET /api/akademik/forum/threads/:id
+export async function ambilDetailThread(req: Request, res: Response): Promise<Response> {
+  try {
+    const id = req.params.id as string;
+    const thread = await AkademikModel.getThreadById(id);
+
+    if (!thread) {
+      return res.status(404).json({
+        success: false,
+        message: 'Thread diskusi tidak ditemukan!',
+      });
+    }
+
+    const replies = await AkademikModel.getThreadReplies(id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil detail thread.',
+      data: {
+        ...thread,
+        balasan: replies
+      }
+    });
+  } catch (error) {
+    console.error('Error saat mengambil detail thread:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// POST /api/akademik/forum/threads/:id/replies
+export async function buatBalasan(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const threadId = req.params.id as string;
+    const { konten } = req.body;
+
+    if (!konten) {
+      return res.status(400).json({
+        success: false,
+        message: 'Konten balasan tidak boleh kosong!',
+      });
+    }
+
+    // Pastikan thread ada
+    const thread = await AkademikModel.getThreadById(threadId);
+    if (!thread) {
+      return res.status(404).json({
+        success: false,
+        message: 'Thread diskusi tidak ditemukan!',
+      });
+    }
+
+    const newReply = await AkademikModel.createReply({
+      thread_id: threadId,
+      user_id: userId,
+      konten
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Balasan berhasil dikirim!',
+      data: newReply
+    });
+  } catch (error) {
+    console.error('Error saat mengirim balasan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server saat mengirim balasan.',
+    });
+  }
+}
