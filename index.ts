@@ -8,6 +8,7 @@ import authRoutes from './src/routes/authRoutes';
 import biodataRoutes from './src/routes/biodataRoutes';
 import dokumenRoutes from './src/routes/dokumenRoutes';
 import portalRoutes from './src/routes/portalRoutes';
+import akademikRoutes from './src/routes/akademikRoutes';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/biodata', biodataRoutes);
 app.use('/api/dokumen', dokumenRoutes);
 app.use('/api/portal', portalRoutes);
+app.use('/api/akademik', akademikRoutes);
 
 // Membuat rute API pertama
 app.get('/', (req, res) => {
