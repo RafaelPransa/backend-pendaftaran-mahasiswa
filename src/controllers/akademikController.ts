@@ -27,3 +27,93 @@ export async function getDashboard(req: Request, res: Response): Promise<Respons
     });
   }
 }
+
+// Feature 2: KRS (Kartu Rencana Studi)
+
+// GET /api/akademik/krs/kelas
+export async function getKelasTersedia(req: Request, res: Response): Promise<Response> {
+  try {
+    const data = await AkademikModel.getAvailableKelas();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar kelas kuliah yang tersedia.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil kelas tersedia:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// GET /api/akademik/krs
+export async function getKrs(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const data = await AkademikModel.getKrsByUserId(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil KRS Anda.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil KRS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// POST /api/akademik/krs
+export async function simpanKrs(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const { kelas_ids, semester, tahun_akademik } = req.body;
+
+    if (!Array.isArray(kelas_ids)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter kelas_ids harus berupa array!',
+      });
+    }
+
+    if (!semester || !tahun_akademik) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kolom semester dan tahun_akademik wajib diisi!',
+      });
+    }
+
+    const krsDiambil = await AkademikModel.enrollKrs(userId, kelas_ids, semester, tahun_akademik);
+
+    return res.status(200).json({
+      success: true,
+      message: 'KRS Anda berhasil disimpan!',
+      data: krsDiambil
+    });
+  } catch (error) {
+    console.error('Error saat menyimpan KRS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server saat menyimpan KRS.',
+    });
+  }
+}

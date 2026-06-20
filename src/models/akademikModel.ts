@@ -47,3 +47,110 @@ export async function getDashboardData(userId: string): Promise<any> {
     pengumuman
   };
 }
+
+// Feature 2: KRS (Kartu Rencana Studi)
+
+export interface KrsEnrollment {
+  user_id: string;
+  kelas_id: string;
+  semester: number;
+  tahun_akademik: string;
+}
+
+// Mendapatkan daftar kelas yang tersedia untuk diprogram
+export async function getAvailableKelas(): Promise<any[]> {
+  const available = await db('kelas')
+    .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+    .select(
+      'kelas.id as kelas_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'matakuliah.semester as semester_matakuliah',
+      'kelas.hari',
+      'kelas.jam',
+      'kelas.ruangan',
+      'kelas.dosen',
+      'kelas.kuota'
+    );
+
+  const enrollments = await db('krs')
+    .select('kelas_id')
+    .count('id as terdaftar')
+    .groupBy('kelas_id');
+
+  const enrollmentMap = new Map(
+    enrollments.map((e) => [e.kelas_id, parseInt(e.terdaftar as string || '0', 10)])
+  );
+
+  return available.map((k) => {
+    const terdaftar = enrollmentMap.get(k.kelas_id) || 0;
+    return {
+      ...k,
+      terdaftar,
+      sisa_kuota: Math.max(0, k.kuota - terdaftar)
+    };
+  });
+}
+
+// Mendapatkan KRS mahasiswa
+export async function getKrsByUserId(userId: string): Promise<any[]> {
+  return await db('krs')
+    .join('kelas', 'krs.kelas_id', 'kelas.id')
+    .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+    .select(
+      'krs.id as krs_id',
+      'kelas.id as kelas_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'kelas.hari',
+      'kelas.jam',
+      'kelas.ruangan',
+      'kelas.dosen',
+      'krs.semester',
+      'krs.tahun_akademik'
+    )
+    .where('krs.user_id', userId);
+}
+
+// Menyimpan pemrogaman KRS mahasiswa dalam Transaction
+export async function enrollKrs(
+  userId: string,
+  kelasIds: string[],
+  semester: number,
+  tahunAkademik: string
+): Promise<any[]> {
+  return await db.transaction(async (trx) => {
+    // Hapus KRS lama untuk semester dan tahun akademik yang sama agar tidak duplikat
+    await trx('krs')
+      .where({ user_id: userId, semester, tahun_akademik: tahunAkademik })
+      .del();
+
+    if (kelasIds.length === 0) {
+      return [];
+    }
+
+    const records = kelasIds.map((kelasId) => ({
+      user_id: userId,
+      kelas_id: kelasId,
+      semester,
+      tahun_akademik: tahunAkademik
+    }));
+
+    await trx('krs').insert(records);
+
+    return await trx('krs')
+      .join('kelas', 'krs.kelas_id', 'kelas.id')
+      .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+      .select(
+        'krs.id as krs_id',
+        'matakuliah.nama as nama_matakuliah',
+        'matakuliah.sks',
+        'kelas.hari',
+        'kelas.jam',
+        'kelas.dosen'
+      )
+      .where({ 'krs.user_id': userId, 'krs.semester': semester, 'krs.tahun_akademik': tahunAkademik });
+  });
+}
