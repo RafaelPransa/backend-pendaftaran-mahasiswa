@@ -1,15 +1,24 @@
-const knex = require('../../knexfile');
-const db = require('knex')(knex.development);
+import knex from 'knex';
+import config from '../../knexfile';
+
+const db = knex(config.development);
+
+export interface DokumenData {
+  ktp?: string;
+  kartu_keluarga?: string;
+  ijazah_skl?: string;
+  pas_foto?: string;
+}
 
 // Fungsi untuk mencari berkas berdasarkan ID User
-exports.findByUserId = async (userId) => {
+export async function findByUserId(userId: string): Promise<any> {
   return await db('dokumen').where({ user_id: userId }).first();
-};
+}
 
-// Fungsi gabungan INSERT & UPDATE (Sangat Rapi & Standar Industri)
-exports.saveOrUpdate = async (userId, dataOlah) => {
+// Fungsi gabungan INSERT & UPDATE
+export async function saveOrUpdate(userId: string, dataOlah: DokumenData): Promise<any> {
   // Cek dulu apakah baris data user sudah ada di database
-  const berkasExist = await this.findByUserId(userId);
+  const berkasExist = await findByUserId(userId);
 
   if (berkasExist) {
     // Jika sudah ada, langsung eksekusi UPDATE
@@ -24,4 +33,4 @@ exports.saveOrUpdate = async (userId, dataOlah) => {
     const [insertedDoc] = await db('dokumen').insert(dataBaru).returning('*');
     return insertedDoc;
   }
-};
+}

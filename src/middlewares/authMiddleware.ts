@@ -1,7 +1,8 @@
-const jwt = require('jsonwebtoken');
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
 
 // Satpam Umum: Mengecek apakah pengguna sudah login (punya token JWT sah)
-exports.authenticateToken = (req, res, next) => {
+export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   try {
     // Ambil token dari header 'Authorization'
     // Format standar industri: "Bearer <TOKEN_JWT_DI_SINI>"
@@ -12,13 +13,17 @@ exports.authenticateToken = (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message:
-          'Akses ditolak. Token tidak ditemukan, silahkan login terlebih dahulu',
+        message: 'Akses ditolak. Token tidak ditemukan, silahkan login terlebih dahulu',
       });
     }
 
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined in environment variables');
+    }
+
     // Verifikasi token menggunakan kunci rahasi dari .env (JWT_SECRET)
-    jwt.verify(token, process.env.JWT_SECRET, (err, decodedUser) => {
+    jwt.verify(token, secret, (err, decodedUser) => {
       if (err) {
         return res.status(403).json({
           success: false,
@@ -28,7 +33,7 @@ exports.authenticateToken = (req, res, next) => {
 
       // Jika token sah, simpan data user (id & role) ke dalam objek 'req.user'
       // agar bisa dibaca oleh controller berikutnya
-      req.user = decodedUser;
+      req.user = decodedUser as { id: string; role: string };
 
       // Lanjutkan ke fungsi controller asli
       next();
@@ -42,12 +47,13 @@ exports.authenticateToken = (req, res, next) => {
   }
 };
 
-exports.authenticateRoles = (...allowedRoles) => {
-    return (req, res, next) => {
-        // req.user didapatkan dari hasil lolos middleware umum di atas
-        return res.status(403).json({
-            success: false,
-            message: 'Akses dilarang. Anda tidak memiliki izin untuk mengakses fitur ini!',
-        });
-    }
+export const authenticateRoles = (...allowedRoles: string[]) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    // req.user didapatkan dari hasil lolos middleware umum di atas
+    // Catatan: Kami tetap mempertahankan perilaku asli yang langsung mengembalikan 403
+    return res.status(403).json({
+      success: false,
+      message: 'Akses dilarang. Anda tidak memiliki izin untuk mengakses fitur ini!',
+    });
+  };
 };

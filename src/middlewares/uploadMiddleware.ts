@@ -1,10 +1,11 @@
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import { Request } from 'express';
 
 // Simpan file secara lokal
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const dir = './src/public/uploads';
 
     // Skenario Profesional: Jika folder belum ada, otomatis buat foldernya lewat kode
@@ -14,7 +15,7 @@ const storage = multer.diskStorage({
 
     cb(null, dir);
   },
-  filename: (req, file, cb) => {
+  filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     // Mengubah nama file menjadi unik: idUser-timestamp-namaAsli.ekstensi
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const ext = path.extname(file.originalname);
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
 });
 
 // Filter Validasi: Hanya izinkan file Gambar (JPG/PNG) atau PDF
-const filterFile = (req, file, cb) => {
+const filterFile = (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   const allowedTypes = /jpeg|jpg|png|pdf/;
   const extname = allowedTypes.test(
     path.extname(file.originalname).toLowerCase(),
@@ -48,4 +49,4 @@ const upload = multer({
   limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
 });
 
-module.exports = upload;
+export default upload;

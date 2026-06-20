@@ -1,6 +1,7 @@
-const BiodataModel = require('../models/biodataModel');
+import { Request, Response } from 'express';
+import * as BiodataModel from '../models/biodataModel';
 
-exports.isiBiodata = async (req, res) => {
+export async function isiBiodata(req: Request, res: Response): Promise<Response> {
   try {
     const {
       tempat_lahir,
@@ -15,6 +16,13 @@ exports.isiBiodata = async (req, res) => {
     } = req.body;
 
     // Data ID user diambil dari Token JWT yang sukses lolos dari satpam middleware
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
     const userId = req.user.id;
 
     // Validasi memastikan tidak ada inputan yang kosong
@@ -81,4 +89,4 @@ exports.isiBiodata = async (req, res) => {
       message: 'Terjadi kesalahan internal di server',
     });
   }
-};
+}

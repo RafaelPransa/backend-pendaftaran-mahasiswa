@@ -1,12 +1,13 @@
-// Panggil library
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
 
-// Panggil konfigurasi database
-// const db = require('./src/config/db');
+// Panggil konfigurasi database jika diperlukan untuk pre-connect
+// import './src/config/db';
 
-// Inisialisasi express
+import authRoutes from './src/routes/authRoutes';
+import biodataRoutes from './src/routes/biodataRoutes';
+import dokumenRoutes from './src/routes/dokumenRoutes';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -16,16 +17,9 @@ app.use(cors());
 // Izinkan express untuk membaca data format JSON dari front-end
 app.use(express.json());
 
-// Panggil dan daftarkan route auth
-const authRoutes = require('./src/routes/authRoutes');
+// Daftarkan route
 app.use('/api/auth', authRoutes);
-
-// Route Biodata
-const biodataRoutes = require('./src/routes/biodataRoutes');
 app.use('/api/biodata', biodataRoutes);
-
-// Route dokumen
-const dokumenRoutes = require('./src/routes/dokumenRoutes');
 app.use('/api/dokumen', dokumenRoutes);
 
 // Membuat rute API pertama

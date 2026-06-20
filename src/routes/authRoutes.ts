@@ -1,10 +1,11 @@
-const express = require('express');
-const router = express.Router();
-const authController = require('../controllers/authController');
-const {
+import { Router, Request, Response } from 'express';
+import * as authController from '../controllers/authController';
+import {
   authenticateToken,
   authenticateRoles,
-} = require('../middlewares/authMiddleware');
+} from '../middlewares/authMiddleware';
+
+const router = Router();
 
 // Rute Umum (Siapa saja bisa akses tanpa login)
 // Fungsi: Menerima pendaftaran akun baru
@@ -15,7 +16,7 @@ router.post('/login', authController.login);
 
 // Rute hanya untuk simulasi pengujian middleware
 // Endpoint ini hanya bisa diakses kalau user sudah LOGIN (mahasiswa & admin bisa)
-router.get('/dashboard-bersama', authenticateToken, (req, res) => {
+router.get('/dashboard-bersama', authenticateToken, (req: Request, res: Response) => {
   res.json({
     success: true,
     message: 'Selamat! Anda berhasil menembus proteksi token',
@@ -28,7 +29,7 @@ router.get(
   '/dashboard-admin',
   authenticateToken,
   authenticateRoles('admin'),
-  (req, res) => {
+  (req: Request, res: Response) => {
     res.json({
       success: true,
       message: 'Halo admin ganteng! Selamat datang di kontrol panel utama.',
@@ -36,4 +37,4 @@ router.get(
   },
 );
 
-module.exports = router;
+export default router;

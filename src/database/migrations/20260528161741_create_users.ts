@@ -1,8 +1,6 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.up = async function (knex) {
+import type { Knex } from 'knex';
+
+export async function up(knex: Knex): Promise<void> {
   // Aktifkan ekstensi uuid-ossp di PostgreSQL agar bisa generate UUID otomatis
   await knex.raw('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"');
   // Buat table users
@@ -16,13 +14,9 @@ exports.up = async function (knex) {
     table.string('role', 50).defaultTo('student');
     table.timestamps(true, true); // Otomatis membuat kolom created_at dan updated_at
   });
-};
+}
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.down = async function (knex) {
+export async function down(knex: Knex): Promise<void> {
   // Menghapus tabel dengan urutan terbalik
   await knex.schema.dropTableIfExists('users');
-};
+}

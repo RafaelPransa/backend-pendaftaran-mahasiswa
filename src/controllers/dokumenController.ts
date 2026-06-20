@@ -1,7 +1,15 @@
-const DokumenModel = require('../models/dokumenModel');
+import { Request, Response } from 'express';
+import * as DokumenModel from '../models/dokumenModel';
 
-exports.uploadBerkas = async (req, res) => {
+export async function uploadBerkas(req: Request, res: Response): Promise<Response> {
   try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
     const userId = req.user.id;
 
     // 1. Validasi awal: Pastikan ada file yang dikirim lewat form-data
@@ -12,7 +20,9 @@ exports.uploadBerkas = async (req, res) => {
       });
     }
 
-    if (Object.keys(req.files).length > 1) {
+    const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+
+    if (Object.keys(filesObj).length > 1) {
       return res.status(400).json({
         success: false,
         message:
@@ -21,23 +31,23 @@ exports.uploadBerkas = async (req, res) => {
     }
 
     // 2. Mapping data secara dinamis & Tentukan custom message secara spesifik
-    const dataOlah = {};
+    const dataOlah: DokumenModel.DokumenData = {};
     let customMessage = '';
 
-    if (req.files['ktp']) {
-      dataOlah.ktp = req.files['ktp'][0].filename;
+    if (filesObj['ktp'] && filesObj['ktp'][0]) {
+      dataOlah.ktp = filesObj['ktp'][0].filename;
       customMessage = 'Kartu Tanda Penduduk (KTP) berhasil diunggah!';
     }
-    if (req.files['kartu_keluarga']) {
-      dataOlah.kartu_keluarga = req.files['kartu_keluarga'][0].filename;
+    if (filesObj['kartu_keluarga'] && filesObj['kartu_keluarga'][0]) {
+      dataOlah.kartu_keluarga = filesObj['kartu_keluarga'][0].filename;
       customMessage = 'Kartu Keluarga (KK) berhasil diunggah!';
     }
-    if (req.files['ijazah_skl']) {
-      dataOlah.ijazah_skl = req.files['ijazah_skl'][0].filename;
+    if (filesObj['ijazah_skl'] && filesObj['ijazah_skl'][0]) {
+      dataOlah.ijazah_skl = filesObj['ijazah_skl'][0].filename;
       customMessage = 'Ijazah / SKL berhasil diunggah!';
     }
-    if (req.files['pas_foto']) {
-      dataOlah.pas_foto = req.files['pas_foto'][0].filename;
+    if (filesObj['pas_foto'] && filesObj['pas_foto'][0]) {
+      dataOlah.pas_foto = filesObj['pas_foto'][0].filename;
       customMessage = 'Pas Foto 4x6 berhasil diunggah!';
     }
 
@@ -57,4 +67,4 @@ exports.uploadBerkas = async (req, res) => {
       message: 'Terjadi kesalahan internal pada server saat memproses file.',
     });
   }
-};
+}

@@ -1,9 +1,7 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.up = function (knex) {
-  return knex.schema.createTable('biodata', function (table) {
+import type { Knex } from 'knex';
+
+export async function up(knex: Knex): Promise<void> {
+  await knex.schema.createTable('biodata', (table) => {
     // Relasi ke table users (1 user memiliki 1 biodata)
     table
       .uuid('user_id')
@@ -27,12 +25,8 @@ exports.up = function (knex) {
 
     table.timestamps(true, true);
   });
-};
+}
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.down = function (knex) {
-  return knex.schema.dropTableIfExists('biodata');
-};
+export async function down(knex: Knex): Promise<void> {
+  await knex.schema.dropTableIfExists('biodata');
+}

@@ -1,8 +1,6 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.up = async function (knex) {
+import type { Knex } from 'knex';
+
+export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable('dokumen', (table) => {
     // Terikat erat dengan user_id sebagai Primary Key & Foreign Key
     table
@@ -20,12 +18,8 @@ exports.up = async function (knex) {
 
     table.timestamps(true, true);
   });
-};
+}
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.down = async function (knex) {
+export async function down(knex: Knex): Promise<void> {
   await knex.schema.dropTableIfExists('dokumen');
-};
+}

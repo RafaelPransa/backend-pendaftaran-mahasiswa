@@ -1,11 +1,13 @@
-const knex = require('../../knexfile'); // Panggil konfigurasi knex
-// Inisialisasi knex menggunakan konfigurasi developmentnya
-const db = require('knex')(knex.development);
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+import { Request, Response } from 'express';
+import knex from 'knex';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import config from '../../knexfile';
+
+const db = knex(config.development);
 
 // Fungsi register
-exports.register = async (req, res) => {
+export async function register(req: Request, res: Response): Promise<Response> {
   try {
     const {
       nama_lengkap,
@@ -17,7 +19,7 @@ exports.register = async (req, res) => {
     } = req.body;
 
     // Wadah penampung validasi error
-    const errors = {};
+    const errors: Record<string, string> = {};
 
     // ==========================================
     // VALIDASI INPUT DARI FRONTEND
@@ -104,7 +106,7 @@ exports.register = async (req, res) => {
     // PROSES EKSEKUSI & PENYIMPANAN DATA
     // ==========================================
 
-    // Amankan password menggunakan bcryot (salt rounds 10 sesuai standar indrustri)
+    // Amankan password menggunakan bcrypt (salt rounds 10 sesuai standar industri)
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Simpan user baru ke dalam tabel 'users'
@@ -118,7 +120,7 @@ exports.register = async (req, res) => {
         password: hashedPassword,
         role: 'student',
       })
-      .returning(['*']);
+      .returning('*');
 
     // Proteksi data sensitif, (jangan pulangkan password ke frontend!)
     const newUser = {
@@ -143,10 +145,10 @@ exports.register = async (req, res) => {
       message: 'Terjadi kesalahan pada server internal.',
     });
   }
-};
+}
 
 // Fungsi Login
-exports.login = async (req, res) => {
+export async function login(req: Request, res: Response): Promise<Response> {
   try {
     const { email, password } = req.body;
 
@@ -180,9 +182,14 @@ exports.login = async (req, res) => {
 
     // Jika sukses, buat JWT Token (berlaku selama 1 hari / 24 jam)
     // masukkan data ID dan Role ke dalam token agar Frontend bisa memanfaatkannya
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET is not defined in environment variables');
+    }
+
     const token = jwt.sign(
       { id: user.id, role: user.role },
-      process.env.JWT_SECRET,
+      secret,
       { expiresIn: '24h' },
     );
 
@@ -206,4 +213,4 @@ exports.login = async (req, res) => {
       message: 'Terjadi kesalahan pada server internal.',
     });
   }
-};
+}

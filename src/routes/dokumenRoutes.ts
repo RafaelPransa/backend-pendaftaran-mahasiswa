@@ -1,12 +1,12 @@
-const express = require('express');
-const router = express.Router();
-const dokumenController = require('../controllers/dokumenController');
-const { authenticateToken } = require('../middlewares/authMiddleware');
-const upload = require('../middlewares/uploadMiddleware');
+import { Router } from 'express';
+import * as dokumenController from '../controllers/dokumenController';
+import { authenticateToken } from '../middlewares/authMiddleware';
+import upload from '../middlewares/uploadMiddleware';
+
+const router = Router();
 
 // Endpoint: POST /api/dokumen
 // Pengecekan: JWT terus ke Multer menangkap 4 field file
-
 router.post(
   '/',
   authenticateToken,
@@ -19,4 +19,4 @@ router.post(
   dokumenController.uploadBerkas,
 );
 
-module.exports = router;
+export default router;
