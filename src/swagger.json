@@ -1,0 +1,967 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Pendaftaran Mahasiswa",
+    "description": "Dokumentasi Lengkap API Layanan Web Pendaftaran Mahasiswa Versi 2 (Calon Mahasiswa, Mahasiswa Aktif, dan Portal Admin)",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Server Pengembangan Lokal"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Masukkan Token JWT Anda tanpa menyertakan kata 'Bearer '"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "nama_lengkap": { "type": "string" },
+          "nik": { "type": "string" },
+          "nomor_wa": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Biodata": {
+        "type": "object",
+        "properties": {
+          "tempat_lahir": { "type": "string" },
+          "tanggal_lahir": { "type": "string", "format": "date" },
+          "jenis_kelamin": { "type": "string", "enum": ["Laki-laki", "Perempuan"] },
+          "agama": { "type": "string" },
+          "alamat": { "type": "string" },
+          "asal_sekolah": { "type": "string" },
+          "pilihan_prodi_1": { "type": "string", "format": "uuid" },
+          "pilihan_prodi_2": { "type": "string", "format": "uuid" }
+        }
+      },
+      "Rapor": {
+        "type": "object",
+        "properties": {
+          "semester": { "type": "integer", "minimum": 1, "maximum": 5 },
+          "matematika": { "type": "number" },
+          "bahasa_indonesia": { "type": "number" },
+          "bahasa_inggris": { "type": "number" },
+          "ipa": { "type": "number" },
+          "ips": { "type": "number" }
+        }
+      },
+      "ProgramStudi": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "kode": { "type": "string" },
+          "nama": { "type": "string" },
+          "fakultas": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "Pengumuman": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "judul": { "type": "string" },
+          "konten": { "type": "string" },
+          "kategori": { "type": "string", "enum": ["PMB", "Akademik"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Registrasi Akun Calon Mahasiswa Baru",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nama_lengkap", "nik", "nomor_wa", "email", "password", "konfirmasi_password"],
+                "properties": {
+                  "nama_lengkap": { "type": "string", "example": "Budi Santoso" },
+                  "nik": { "type": "string", "example": "1234567890123456" },
+                  "nomor_wa": { "type": "string", "example": "08123456789" },
+                  "email": { "type": "string", "format": "email", "example": "budi@example.com" },
+                  "password": { "type": "string", "minLength": 6, "example": "password123" },
+                  "konfirmasi_password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registrasi akun berhasil.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Registrasi akun mahasiswa berhasil!" },
+                    "data": { "$ref": "#/components/schemas/User" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Gagal validasi input." },
+          "409": { "description": "Email atau NIK sudah terdaftar." }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Autentikasi"],
+        "summary": "Login Pengguna (Mahasiswa / Admin)",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "budi@example.com" },
+                  "password": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login berhasil, token JWT diberikan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Login berhasil. Selamat datang kembali" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+                        "user": {
+                          "type": "object",
+                          "properties": {
+                            "id": { "type": "string", "format": "uuid" },
+                            "email": { "type": "string" },
+                            "role": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Email dan password wajib diisi." },
+          "401": { "description": "Email atau password salah." }
+        }
+      }
+    },
+    "/api/auth/dashboard-bersama": {
+      "get": {
+        "tags": ["Autentikasi"],
+        "summary": "Simulasi Akses Dashboard Pengguna Terotentikasi",
+        "description": "Rute pengujian token JWT untuk memeriksa data user yang log.",
+        "responses": {
+          "200": { "description": "Token sah, akses diizinkan." },
+          "401": { "description": "Token tidak ditemukan." },
+          "403": { "description": "Token tidak sah/kadaluarsa." }
+        }
+      }
+    },
+    "/api/auth/dashboard-admin": {
+      "get": {
+        "tags": ["Autentikasi"],
+        "summary": "Simulasi Akses Dashboard khusus Admin",
+        "responses": {
+          "200": { "description": "Akses diizinkan." },
+          "403": { "description": "Akses ditolak (Bukan role admin)." }
+        }
+      }
+    },
+    "/api/biodata/biodata": {
+      "post": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Isi Biodata Calon Mahasiswa Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Biodata" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Biodata berhasil disimpan." },
+          "400": { "description": "Input tidak valid." }
+        }
+      },
+      "put": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Edit Biodata Calon Mahasiswa Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Biodata" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Biodata berhasil diperbarui." }
+        }
+      }
+    },
+    "/api/biodata/rapor": {
+      "post": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Isi Nilai Rapor Semester 1-5",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/Rapor" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Nilai rapor berhasil disimpan." }
+        }
+      },
+      "get": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Mengambil Nilai Rapor Semester 1-5 Calon Mahasiswa",
+        "responses": {
+          "200": {
+            "description": "Daftar nilai rapor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Rapor" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dokumen": {
+      "get": {
+        "tags": ["Dokumen Berkas"],
+        "summary": "Melihat Status Berkas Dokumen Milik Mahasiswa",
+        "responses": {
+          "200": { "description": "Detail dokumen." }
+        }
+      },
+      "post": {
+        "tags": ["Dokumen Berkas"],
+        "summary": "Mengunggah Dokumen Persyaratan Pendaftaran",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ktp": { "type": "string", "format": "binary", "description": "Scan KTP (PDF/JPG)" },
+                  "kartu_keluarga": { "type": "string", "format": "binary", "description": "Scan KK (PDF/JPG)" },
+                  "ijazah_skl": { "type": "string", "format": "binary", "description": "Scan Ijazah/SKL (PDF/JPG)" },
+                  "pas_foto": { "type": "string", "format": "binary", "description": "Pas Foto Terbaru (JPG/PNG)" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Dokumen berhasil diunggah." }
+        }
+      }
+    },
+    "/api/portal/beranda": {
+      "get": {
+        "tags": ["Portal PMB"],
+        "summary": "Mengambil Statistik Beranda PMB (Public)",
+        "security": [],
+        "responses": {
+          "200": { "description": "Statistik pendaftaran umum." }
+        }
+      }
+    },
+    "/api/portal/informasi": {
+      "get": {
+        "tags": ["Portal PMB"],
+        "summary": "Mengambil Jadwal Gelombang & Syarat Pendaftaran (Public)",
+        "security": [],
+        "responses": {
+          "200": { "description": "Jadwal dan syarat PMB." }
+        }
+      }
+    },
+    "/api/portal/status": {
+      "get": {
+        "tags": ["Portal PMB"],
+        "summary": "Mengecek Status Seleksi Calon Mahasiswa",
+        "responses": {
+          "200": { "description": "Status kelulusan dan seleksi saat ini." }
+        }
+      }
+    },
+    "/api/portal/admin/status/{userId}": {
+      "put": {
+        "tags": ["Portal PMB"],
+        "summary": "Update Status Seleksi Calon Mahasiswa (Admin)",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status_verifikasi": { "type": "string", "enum": ["belum_diverifikasi", "diverifikasi", "ditolak"] },
+                  "status_kelulusan": { "type": "string", "enum": ["proses", "lulus", "tidak_lulus"] },
+                  "catatan": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status kelulusan berhasil diperbarui." }
+        }
+      }
+    },
+    "/api/akademik/dashboard": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengambil Data Ringkasan Dashboard Akademik & Pengumuman",
+        "responses": {
+          "200": { "description": "Data KRS, KHS, IPK, dan pengumuman dinamis." }
+        }
+      }
+    },
+    "/api/akademik/krs/kelas": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengambil Daftar Kelas Mata Kuliah Tersedia",
+        "responses": {
+          "200": { "description": "Daftar mata kuliah semester berjalan." }
+        }
+      }
+    },
+    "/api/akademik/krs": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengambil Rencana Studi (KRS) Mahasiswa",
+        "responses": {
+          "200": { "description": "Mata kuliah yang diprogram semester ini." }
+        }
+      },
+      "post": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengajukan/Menyimpan Rencana Studi (KRS)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["kelas_ids"],
+                "properties": {
+                  "kelas_ids": {
+                    "type": "array",
+                    "items": { "type": "string", "format": "uuid" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "KRS berhasil diajukan untuk persetujuan." }
+        }
+      }
+    },
+    "/api/akademik/khs": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengambil Kartu Hasil Studi (KHS) per Semester",
+        "parameters": [
+          {
+            "name": "semester",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Daftar nilai dan IPS semester terpilih." }
+        }
+      }
+    },
+    "/api/akademik/transkrip": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Mengambil Transkrip Nilai Kumulatif Mahasiswa",
+        "responses": {
+          "200": { "description": "Semua nilai kelulusan dan IPK." }
+        }
+      }
+    },
+    "/api/akademik/keuangan": {
+      "get": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Melihat Status Tagihan dan Riwayat Pembayaran UKT",
+        "responses": {
+          "200": { "description": "Detail tagihan UKT." }
+        }
+      }
+    },
+    "/api/akademik/keuangan/bayar": {
+      "post": {
+        "tags": ["Akademik Mahasiswa Aktif"],
+        "summary": "Melakukan Simulasi Pembayaran UKT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nominal"],
+                "properties": {
+                  "nominal": { "type": "number", "example": 3500000 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pembayaran sukses terekam." }
+        }
+      }
+    },
+    "/api/akademik/forum/threads": {
+      "get": {
+        "tags": ["Forum Diskusi Akademik"],
+        "summary": "Mengambil Semua Utas Forum Diskusi",
+        "responses": {
+          "200": { "description": "Daftar utas diskusi terurut terbaru." }
+        }
+      },
+      "post": {
+        "tags": ["Forum Diskusi Akademik"],
+        "summary": "Membuat Utas Diskusi Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["judul", "konten"],
+                "properties": {
+                  "judul": { "type": "string", "example": "Pertanyaan mengenai KRS Semester Ganjil" },
+                  "konten": { "type": "string", "example": "Apakah jadwal pengisian diperpanjang?" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Utas berhasil dibuat." }
+        }
+      }
+    },
+    "/api/akademik/forum/threads/{id}": {
+      "get": {
+        "tags": ["Forum Diskusi Akademik"],
+        "summary": "Mengambil Detail Utas Forum Beserta Balasannya",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Detail utas dan daftar komentar." }
+        }
+      }
+    },
+    "/api/akademik/forum/threads/{id}/replies": {
+      "post": {
+        "tags": ["Forum Diskusi Akademik"],
+        "summary": "Membalas/Mengomentari Utas Diskusi",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["konten"],
+                "properties": {
+                  "konten": { "type": "string", "example": "Biasanya diperpanjang sampai akhir pekan depan." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Balasan berhasil dikirim." }
+        }
+      }
+    },
+    "/api/admin/dashboard": {
+      "get": {
+        "tags": ["Admin: Dashboard & Laporan"],
+        "summary": "Mengambil Metrik KPI & Ringkasan Chart Dashboard Admin",
+        "responses": {
+          "200": { "description": "KPI Statistik (Total pendaftar, kuota, donut chart status, favorit prodi)." }
+        }
+      }
+    },
+    "/api/admin/laporan/pmb": {
+      "get": {
+        "tags": ["Admin: Dashboard & Laporan"],
+        "summary": "Mengambil Laporan Tren Pendaftaran Mingguan",
+        "responses": {
+          "200": { "description": "Data tren grafik mingguan." }
+        }
+      }
+    },
+    "/api/admin/pendaftar": {
+      "get": {
+        "tags": ["Admin: Pengelolaan Pendaftar"],
+        "summary": "Mengambil Daftar Pendaftar PMB dengan Filter",
+        "parameters": [
+          { "name": "search", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Cari nama, email, NIK" },
+          { "name": "prodi_id", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Filter program studi" },
+          { "name": "status_verifikasi", "in": "query", "required": false, "schema": { "type": "string", "enum": ["belum_diverifikasi", "diverifikasi", "ditolak"] } },
+          { "name": "status_kelulusan", "in": "query", "required": false, "schema": { "type": "string", "enum": ["proses", "lulus", "tidak_lulus"] } },
+          { "name": "gelombang", "in": "query", "required": false, "schema": { "type": "string" }, "description": "Filter gelombang jadwal" }
+        ],
+        "responses": {
+          "200": { "description": "Daftar pendaftar." }
+        }
+      }
+    },
+    "/api/admin/pendaftar/export": {
+      "get": {
+        "tags": ["Admin: Pengelolaan Pendaftar"],
+        "summary": "Ekspor Data Pendaftar dalam format CSV",
+        "responses": {
+          "200": {
+            "description": "File CSV pendaftar.",
+            "content": {
+              "text/csv": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/pendaftar/{userId}": {
+      "get": {
+        "tags": ["Admin: Pengelolaan Pendaftar"],
+        "summary": "Mengambil Detail Profil Pendaftar Lengkap",
+        "description": "Mengembalikan data biodata, berkas upload, dan nilai rapor semester 1-5 milik pendaftar.",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": { "description": "Detail biodata, rapor, dan dokumen." },
+          "404": { "description": "Pendaftar tidak ditemukan." }
+        }
+      }
+    },
+    "/api/admin/pendaftar/{userId}/status": {
+      "put": {
+        "tags": ["Admin: Pengelolaan Pendaftar"],
+        "summary": "Mengubah Status Kelulusan Pendaftar",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status_verifikasi": { "type": "string", "enum": ["belum_diverifikasi", "diverifikasi", "ditolak"] },
+                  "status_kelulusan": { "type": "string", "enum": ["proses", "lulus", "tidak_lulus"] },
+                  "catatan": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status kelulusan berhasil diperbarui." }
+        }
+      }
+    },
+    "/api/admin/dokumen": {
+      "get": {
+        "tags": ["Admin: Verifikasi Berkas"],
+        "summary": "Mengambil Semua Berkas Dokumen Masuk",
+        "responses": {
+          "200": { "description": "Daftar seluruh berkas mahasiswa." }
+        }
+      }
+    },
+    "/api/admin/dokumen/{userId}/verify": {
+      "put": {
+        "tags": ["Admin: Verifikasi Berkas"],
+        "summary": "Memverifikasi Dokumen Spesifik Per Berkas",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["jenis_dokumen", "status"],
+                "properties": {
+                  "jenis_dokumen": { "type": "string", "enum": ["ktp", "kartu_keluarga", "ijazah_skl", "pas_foto"] },
+                  "status": { "type": "string", "enum": ["belum_diverifikasi", "disetujui", "ditolak"] },
+                  "catatan": { "type": "string", "example": "Foto buram, unggah ulang." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status berkas berhasil di-update." }
+        }
+      }
+    },
+    "/api/admin/prodi": {
+      "get": {
+        "tags": ["Admin: Program Studi"],
+        "summary": "Mengambil Semua Program Studi",
+        "responses": {
+          "200": {
+            "description": "Daftar prodi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/ProgramStudi" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin: Program Studi"],
+        "summary": "Tambah Program Studi Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["kode", "nama", "fakultas"],
+                "properties": {
+                  "kode": { "type": "string", "example": "IF" },
+                  "nama": { "type": "string", "example": "Informatika" },
+                  "fakultas": { "type": "string", "example": "Fakultas Teknik" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Prodi berhasil ditambahkan." }
+        }
+      }
+    },
+    "/api/admin/prodi/{id}": {
+      "get": {
+        "tags": ["Admin: Program Studi"],
+        "summary": "Mengambil Detail Program Studi",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Detail Program Studi." }
+        }
+      },
+      "put": {
+        "tags": ["Admin: Program Studi"],
+        "summary": "Mengubah Data Program Studi",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kode": { "type": "string" },
+                  "nama": { "type": "string" },
+                  "fakultas": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Prodi berhasil diperbarui." }
+        }
+      },
+      "delete": {
+        "tags": ["Admin: Program Studi"],
+        "summary": "Menghapus Program Studi",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Prodi berhasil dihapus." }
+        }
+      }
+    },
+    "/api/admin/pengumuman": {
+      "get": {
+        "tags": ["Admin: Pengumuman"],
+        "summary": "Mengambil Semua Pengumuman",
+        "responses": {
+          "200": {
+            "description": "Daftar pengumuman.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "data": { "type": "array", "items": { "$ref": "#/components/schemas/Pengumuman" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Admin: Pengumuman"],
+        "summary": "Membuat Pengumuman Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["judul", "konten", "kategori"],
+                "properties": {
+                  "judul": { "type": "string", "example": "Pembukaan Pendaftaran Gelombang 2" },
+                  "konten": { "type": "string", "example": "Pendaftaran gelombang 2 dibuka mulai tanggal 1 April 2026." },
+                  "kategori": { "type": "string", "enum": ["PMB", "Akademik"], "example": "PMB" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pengumuman berhasil diterbitkan." }
+        }
+      }
+    },
+    "/api/admin/pengumuman/{id}": {
+      "get": {
+        "tags": ["Admin: Pengumuman"],
+        "summary": "Mengambil Detail Pengumuman",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Detail pengumuman." }
+        }
+      },
+      "put": {
+        "tags": ["Admin: Pengumuman"],
+        "summary": "Mengubah Data Pengumuman",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "judul": { "type": "string" },
+                  "konten": { "type": "string" },
+                  "kategori": { "type": "string", "enum": ["PMB", "Akademik"] }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Pengumuman berhasil diperbarui." }
+        }
+      },
+      "delete": {
+        "tags": ["Admin: Pengumuman"],
+        "summary": "Menghapus Pengumuman",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Pengumuman berhasil dihapus." }
+        }
+      }
+    },
+    "/api/admin/krs/ajuan": {
+      "get": {
+        "tags": ["Admin: Persetujuan KRS"],
+        "summary": "Mengambil Antrean Pengajuan KRS Mahasiswa",
+        "responses": {
+          "200": { "description": "Daftar antrean KRS." }
+        }
+      }
+    },
+    "/api/admin/krs/ajuan/{userId}": {
+      "get": {
+        "tags": ["Admin: Persetujuan KRS"],
+        "summary": "Mengambil Detail Rencana Studi Ajuan Mahasiswa",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } },
+          { "name": "semester", "in": "query", "required": true, "schema": { "type": "integer" } },
+          { "name": "tahun_akademik", "in": "query", "required": true, "schema": { "type": "string" }, "example": "2026/2027" }
+        ],
+        "responses": {
+          "200": { "description": "Detail ajuan kelas KRS." }
+        }
+      },
+      "put": {
+        "tags": ["Admin: Persetujuan KRS"],
+        "summary": "Verifikasi Persetujuan KRS Mahasiswa (Setuju/Tolak/Minta Revisi)",
+        "parameters": [
+          { "name": "userId", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["semester", "tahun_akademik", "status_persetujuan"],
+                "properties": {
+                  "semester": { "type": "integer" },
+                  "tahun_akademik": { "type": "string" },
+                  "status_persetujuan": { "type": "string", "enum": ["proses", "disetujui", "ditolak"] },
+                  "catatan": { "type": "string", "example": "Batas SKS berlebih." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status persetujuan KRS berhasil disimpan." }
+        }
+      }
+    },
+    "/api/admin/staff/reset-password": {
+      "post": {
+        "tags": ["Admin: Keamanan Staff"],
+        "summary": "Mereset Password Akun Staff/Admin Lain",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["password"],
+                "properties": {
+                  "email": { "type": "string", "format": "email", "example": "staff@example.com" },
+                  "id": { "type": "string", "format": "uuid", "description": "Dapat dicari via ID jika email kosong" },
+                  "password": { "type": "string", "minLength": 6, "example": "passwordbaru123" },
+                  "confirmPassword": { "type": "string", "example": "passwordbaru123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password staff berhasil diubah." },
+          "404": { "description": "Staff/Admin tidak ditemukan." }
+        }
+      }
+    }
+  }
+}
