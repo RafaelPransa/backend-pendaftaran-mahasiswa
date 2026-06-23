@@ -14,6 +14,18 @@ export interface Biodata {
   kota_kabupaten: string;
   kecamatan: string;
   kode_pos: string;
+  pilihan_prodi_1?: string | null;
+  pilihan_prodi_2?: string | null;
+}
+
+export interface Rapor {
+  user_id: string;
+  semester: number;
+  matematika: number;
+  bahasa_indonesia: number;
+  bahasa_inggris: number;
+  ipa: number;
+  ips: number;
 }
 
 // Fungsi untuk menyimpan biodata baru ke PostgreSQL
@@ -35,3 +47,28 @@ export async function update(userId: string, biodataData: Partial<Biodata>): Pro
     .returning('*');
   return updatedBiodata;
 }
+
+// Mendapatkan nilai rapor berdasarkan user_id
+export async function getRaporByUserId(userId: string): Promise<any[]> {
+  return await db('nilai_rapor')
+    .where({ user_id: userId })
+    .orderBy('semester', 'asc');
+}
+
+// Simpan atau update nilai rapor per semester
+export async function saveOrUpdateRapor(userId: string, semester: number, dataRapor: Omit<Rapor, 'user_id' | 'semester'>): Promise<any> {
+  const exist = await db('nilai_rapor').where({ user_id: userId, semester }).first();
+  if (exist) {
+    const [updated] = await db('nilai_rapor')
+      .where({ user_id: userId, semester })
+      .update(dataRapor)
+      .returning('*');
+    return updated;
+  } else {
+    const [inserted] = await db('nilai_rapor')
+      .insert({ user_id: userId, semester, ...dataRapor })
+      .returning('*');
+    return inserted;
+  }
+}
+
