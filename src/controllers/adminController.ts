@@ -1,5 +1,9 @@
 import { Request, Response } from 'express';
+import knex from 'knex';
+import config from '../../knexfile';
 import * as AdminModel from '../models/adminModel';
+
+const db = knex(config.development);
 
 // =========================================================================
 // FEATURE 3: CRUD Program Studi
@@ -548,6 +552,158 @@ export async function ambilTrenPendaftaran(req: Request, res: Response): Promise
     });
   }
 }
+
+// =========================================================================
+// FEATURE 8: Pengelolaan Pendaftar (List, Detail, Status, Export CSV)
+// =========================================================================
+
+export async function ambilSemuaPendaftar(req: Request, res: Response): Promise<Response> {
+  try {
+    const { search, prodi_id, status_verifikasi, status_kelulusan, gelombang } = req.query;
+
+    const pendaftar = await AdminModel.getPendaftarList({
+      search: search as string,
+      prodi_id: prodi_id as string,
+      status_verifikasi: status_verifikasi as string,
+      status_kelulusan: status_kelulusan as string,
+      gelombang: gelombang as string
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar pendaftar PMB.',
+      data: pendaftar
+    });
+  } catch (error) {
+    console.error('Error saat mengambil semua pendaftar:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ambilDetailPendaftar(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = req.params.userId as string;
+    const detail = await AdminModel.getPendaftarDetail(userId);
+
+    if (!detail) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data pendaftar tidak ditemukan!'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil detail profil pendaftar.',
+      data: detail
+    });
+  } catch (error) {
+    console.error('Error saat mengambil detail pendaftar:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ubahStatusKelulusanPendaftar(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = req.params.userId as string;
+    const { status_verifikasi, status_kelulusan, catatan } = req.body;
+
+    const detail = await AdminModel.getPendaftarDetail(userId);
+    if (!detail) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data pendaftar tidak ditemukan!'
+      });
+    }
+
+    // Ganti status verifikasi global dan kelulusan global di database
+    const updateData: any = {};
+    if (status_verifikasi !== undefined) {
+      const allowedVerifikasi = ['belum_diverifikasi', 'diverifikasi', 'ditolak'];
+      if (!allowedVerifikasi.includes(status_verifikasi)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Status verifikasi tidak valid! Harus salah satu dari: ' + allowedVerifikasi.join(', ')
+        });
+      }
+      updateData.status_verifikasi = status_verifikasi;
+    }
+
+    if (status_kelulusan !== undefined) {
+      const allowedKelulusan = ['proses', 'lulus', 'tidak_lulus'];
+      if (!allowedKelulusan.includes(status_kelulusan)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Status kelulusan tidak valid! Harus salah satu dari: ' + allowedKelulusan.join(', ')
+        });
+      }
+      updateData.status_kelulusan = status_kelulusan;
+    }
+
+    if (catatan !== undefined) {
+      updateData.catatan = catatan;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak ada data status yang dikirim untuk diubah!'
+      });
+    }
+
+    // Gunakan update di model portalModel yang sudah ada atau buat knex langsung
+    const [updatedUser] = await db('users')
+      .where({ id: userId })
+      .update(updateData)
+      .returning(['id', 'nama_lengkap', 'email', 'status_verifikasi', 'status_kelulusan', 'catatan']);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil memperbarui status kelulusan pendaftar.',
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error('Error saat update status kelulusan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function eksporPendaftarCsv(req: Request, res: Response): Promise<any> {
+  try {
+    const list = await AdminModel.getPendaftarList({});
+
+    // Header CSV
+    let csvContent = '\ufeffNo,Nama Lengkap,NIK,Email,Nomor WA,Status Verifikasi,Status Kelulusan,Pilihan Prodi 1,Pilihan Prodi 2,Tanggal Daftar\n';
+
+    list.forEach((p, index) => {
+      const prodi1 = p.pilihan_prodi_1_nama ? `"${p.pilihan_prodi_1_nama}"` : '-';
+      const prodi2 = p.pilihan_prodi_2_nama ? `"${p.pilihan_prodi_2_nama}"` : '-';
+      const dateStr = p.created_at instanceof Date ? p.created_at.toISOString().split('T')[0] : String(p.created_at).split('T')[0];
+
+      csvContent += `${index + 1},"${p.nama_lengkap}",'${p.nik},${p.email},${p.nomor_wa},${p.status_verifikasi},${p.status_kelulusan},${prodi1},${prodi2},${dateStr}\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename=pendaftar.csv');
+    return res.status(200).send(csvContent);
+  } catch (error) {
+    console.error('Error saat ekspor CSV:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server saat mengekspor data.'
+    });
+  }
+}
+
 
 
 

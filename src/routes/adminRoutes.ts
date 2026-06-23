@@ -38,4 +38,18 @@ router.put('/krs/ajuan/:userId', adminController.verifikasiKrs);
 router.get('/dashboard', adminController.ambilStatistikDashboard);
 router.get('/laporan/pmb', adminController.ambilTrenPendaftaran);
 
+// =========================================================================
+// FEATURE 6: Verifikasi Dokumen Per Berkas
+// =========================================================================
+router.get('/dokumen', adminController.ambilSemuaDokumen);
+router.put('/dokumen/:userId/verify', adminController.verifikasiDokumen);
+
+// =========================================================================
+// FEATURE 8: Pengelolaan Pendaftar (List, Detail, Status, Export CSV)
+// =========================================================================
+router.get('/pendaftar', adminController.ambilSemuaPendaftar);
+router.get('/pendaftar/export', adminController.eksporPendaftarCsv);
+router.get('/pendaftar/:userId', adminController.ambilDetailPendaftar);
+router.put('/pendaftar/:userId/status', adminController.ubahStatusKelulusanPendaftar);
+
 export default router;

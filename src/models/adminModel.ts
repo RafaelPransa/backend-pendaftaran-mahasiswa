@@ -339,6 +339,106 @@ export async function getRegistrationTrends(): Promise<any[]> {
   }));
 }
 
+// =========================================================================
+// FEATURE 8: Pengelolaan Pendaftar (List, Detail, Status, Export CSV)
+// =========================================================================
+
+export async function getPendaftarList(filters: {
+  search?: string;
+  prodi_id?: string;
+  status_verifikasi?: string;
+  status_kelulusan?: string;
+  gelombang?: string;
+}): Promise<any[]> {
+  const query = db('users')
+    .leftJoin('biodata', 'users.id', 'biodata.user_id')
+    .leftJoin('program_studi as ps1', 'biodata.pilihan_prodi_1', 'ps1.id')
+    .leftJoin('program_studi as ps2', 'biodata.pilihan_prodi_2', 'ps2.id')
+    .select(
+      'users.id as user_id',
+      'users.nama_lengkap',
+      'users.nik',
+      'users.email',
+      'users.nomor_wa',
+      'users.status_verifikasi',
+      'users.status_kelulusan',
+      'users.catatan',
+      'ps1.nama as pilihan_prodi_1_nama',
+      'ps2.nama as pilihan_prodi_2_nama',
+      'users.created_at'
+    )
+    .where('users.role', 'student');
+
+  if (filters.search) {
+    const searchVal = `%${filters.search}%`;
+    query.andWhere((q) => {
+      q.where('users.nama_lengkap', 'like', searchVal)
+        .orWhere('users.email', 'like', searchVal)
+        .orWhere('users.nik', 'like', searchVal);
+    });
+  }
+
+  if (filters.prodi_id) {
+    query.andWhere((q) => {
+      q.where('biodata.pilihan_prodi_1', filters.prodi_id)
+        .orWhere('biodata.pilihan_prodi_2', filters.prodi_id);
+    });
+  }
+
+  if (filters.status_verifikasi) {
+    query.where('users.status_verifikasi', filters.status_verifikasi);
+  }
+
+  if (filters.status_kelulusan) {
+    query.where('users.status_kelulusan', filters.status_kelulusan);
+  }
+
+  if (filters.gelombang) {
+    const gelombangInfo = await db('pmb_jadwal').where({ gelombang: filters.gelombang }).first();
+    if (gelombangInfo) {
+      query.whereBetween('users.created_at', [gelombangInfo.tanggal_mulai, gelombangInfo.tanggal_selesai]);
+    }
+  }
+
+  return await query.orderBy('users.created_at', 'desc');
+}
+
+export async function getPendaftarDetail(userId: string): Promise<any> {
+  const user = await db('users')
+    .select('id', 'nama_lengkap', 'nik', 'nomor_wa', 'email', 'status_verifikasi', 'status_kelulusan', 'catatan', 'created_at')
+    .where({ id: userId, role: 'student' })
+    .first();
+
+  if (!user) return undefined;
+
+  const biodata = await db('biodata')
+    .leftJoin('program_studi as ps1', 'biodata.pilihan_prodi_1', 'ps1.id')
+    .leftJoin('program_studi as ps2', 'biodata.pilihan_prodi_2', 'ps2.id')
+    .select(
+      'biodata.*',
+      'ps1.nama as pilihan_prodi_1_nama',
+      'ps2.nama as pilihan_prodi_2_nama'
+    )
+    .where({ user_id: userId })
+    .first();
+
+  const rapor = await db('nilai_rapor')
+    .where({ user_id: userId })
+    .orderBy('semester', 'asc');
+
+  const dokumen = await db('dokumen')
+    .where({ user_id: userId })
+    .first();
+
+  return {
+    user,
+    biodata: biodata || null,
+    rapor,
+    dokumen: dokumen || null
+  };
+}
+
+
 
 
 
