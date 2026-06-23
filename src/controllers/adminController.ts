@@ -329,3 +329,112 @@ export async function hapusPengumuman(req: Request, res: Response): Promise<Resp
   }
 }
 
+// =========================================================================
+// FEATURE 5: Persetujuan KRS (KRS Approval)
+// =========================================================================
+
+export async function ambilAjuanKrs(req: Request, res: Response): Promise<Response> {
+  try {
+    const submissions = await AdminModel.getKrsSubmissions();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil antrean ajuan KRS mahasiswa.',
+      data: submissions
+    });
+  } catch (error) {
+    console.error('Error saat mengambil ajuan KRS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ambilDetailAjuanKrs(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = req.params.userId as string;
+    const { semester, tahun_akademik } = req.query;
+
+    if (!semester || !tahun_akademik) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query parameter semester dan tahun_akademik wajib disertakan!'
+      });
+    }
+
+    const semNum = parseInt(semester as string, 10);
+    if (isNaN(semNum)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter semester harus berupa angka!'
+      });
+    }
+
+    const detailKrs = await AdminModel.getKrsDetail(userId, semNum, tahun_akademik as string);
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil detail ajuan KRS.',
+      data: detailKrs
+    });
+  } catch (error) {
+    console.error('Error saat mengambil detail KRS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function verifikasiKrs(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = req.params.userId as string;
+    const { semester, tahun_akademik, status_persetujuan, catatan } = req.body;
+
+    if (!semester || !tahun_akademik || !status_persetujuan) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kolom semester, tahun_akademik, dan status_persetujuan wajib diisi!'
+      });
+    }
+
+    const semNum = parseInt(semester as string, 10);
+    if (isNaN(semNum)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parameter semester harus berupa angka!'
+      });
+    }
+
+    const allowedStatus = ['proses', 'disetujui', 'ditolak'];
+    if (!allowedStatus.includes(status_persetujuan)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status persetujuan tidak valid! Harus salah satu dari: ${allowedStatus.join(', ')}`
+      });
+    }
+
+    const detailKrs = await AdminModel.getKrsDetail(userId, semNum, tahun_akademik as string);
+    if (detailKrs.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ajuan KRS mahasiswa untuk semester/tahun akademik tersebut tidak ditemukan!'
+      });
+    }
+
+    const updated = await AdminModel.updateKrsStatus(userId, semNum, tahun_akademik as string, status_persetujuan, catatan || null);
+
+    return res.status(200).json({
+      success: true,
+      message: `Persetujuan KRS mahasiswa berhasil di-update menjadi '${status_persetujuan}'.`,
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saat verifikasi KRS:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+

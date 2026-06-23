@@ -79,3 +79,85 @@ export async function deletePengumuman(id: string): Promise<number> {
   return await db('pengumuman').where({ id }).del();
 }
 
+// =========================================================================
+// FEATURE 5: KRS Approval (Persetujuan KRS)
+// =========================================================================
+
+export async function getKrsSubmissions(): Promise<any[]> {
+  const rows = await db('krs')
+    .join('users', 'krs.user_id', 'users.id')
+    .join('kelas', 'krs.kelas_id', 'kelas.id')
+    .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+    .select(
+      'krs.user_id',
+      'users.nama_lengkap',
+      'users.email',
+      'krs.semester',
+      'krs.tahun_akademik',
+      'krs.status_persetujuan',
+      'krs.catatan'
+    )
+    .sum('matakuliah.sks as total_sks')
+    .groupBy(
+      'krs.user_id',
+      'users.nama_lengkap',
+      'users.email',
+      'krs.semester',
+      'krs.tahun_akademik',
+      'krs.status_persetujuan',
+      'krs.catatan'
+    )
+    .orderBy('krs.tahun_akademik', 'desc')
+    .orderBy('krs.semester', 'desc');
+
+  return rows.map((r) => ({
+    user_id: r.user_id,
+    nama_lengkap: r.nama_lengkap,
+    email: r.email,
+    semester: r.semester,
+    tahun_akademik: r.tahun_akademik,
+    status_persetujuan: r.status_persetujuan,
+    catatan: r.catatan,
+    total_sks: parseInt(r.total_sks as string || '0', 10)
+  }));
+}
+
+export async function getKrsDetail(userId: string, semester: number, tahunAkademik: string): Promise<any[]> {
+  return await db('krs')
+    .join('kelas', 'krs.kelas_id', 'kelas.id')
+    .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+    .select(
+      'krs.id as krs_id',
+      'kelas.id as kelas_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'kelas.hari',
+      'kelas.jam',
+      'kelas.ruangan',
+      'kelas.dosen'
+    )
+    .where({
+      'krs.user_id': userId,
+      'krs.semester': semester,
+      'krs.tahun_akademik': tahunAkademik
+    });
+}
+
+export async function updateKrsStatus(
+  userId: string,
+  semester: number,
+  tahunAkademik: string,
+  status: string,
+  catatan: string | null
+): Promise<any> {
+  return await db('krs')
+    .where({ user_id: userId, semester, tahun_akademik: tahunAkademik })
+    .update({
+      status_persetujuan: status,
+      catatan
+    })
+    .returning('*');
+}
+
+

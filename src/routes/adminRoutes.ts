@@ -25,4 +25,11 @@ router.post('/pengumuman', adminController.tambahPengumuman);
 router.put('/pengumuman/:id', adminController.ubahPengumuman);
 router.delete('/pengumuman/:id', adminController.hapusPengumuman);
 
+// =========================================================================
+// FEATURE 5: Persetujuan KRS (KRS Approval)
+// =========================================================================
+router.get('/krs/ajuan', adminController.ambilAjuanKrs);
+router.get('/krs/ajuan/:userId', adminController.ambilDetailAjuanKrs);
+router.put('/krs/ajuan/:userId', adminController.verifikasiKrs);
+
 export default router;
