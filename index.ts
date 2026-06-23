@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import swaggerUi from 'swagger-ui-express';
+import swaggerDocument from './src/swagger.json';
 
 // Panggil konfigurasi database jika diperlukan untuk pre-connect
 // import './src/config/db';
@@ -23,6 +25,9 @@ app.use(express.json());
 
 // Serve folder uploads secara statis agar bisa diakses oleh front-end
 app.use('/uploads', express.static(path.join(__dirname, 'src/public/uploads')));
+
+// Swagger UI Dokumentasi API
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Daftarkan route
 app.use('/api/auth', authRoutes);
