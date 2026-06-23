@@ -32,4 +32,10 @@ router.get('/krs/ajuan', adminController.ambilAjuanKrs);
 router.get('/krs/ajuan/:userId', adminController.ambilDetailAjuanKrs);
 router.put('/krs/ajuan/:userId', adminController.verifikasiKrs);
 
+// =========================================================================
+// FEATURE 7: Dashboard Statistik Admin & Tren
+// =========================================================================
+router.get('/dashboard', adminController.ambilStatistikDashboard);
+router.get('/laporan/pmb', adminController.ambilTrenPendaftaran);
+
 export default router;

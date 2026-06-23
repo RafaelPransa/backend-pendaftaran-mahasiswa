@@ -216,5 +216,129 @@ export async function getDocumentByUserId(userId: string): Promise<any | undefin
   return await db('dokumen').where({ user_id: userId }).first();
 }
 
+// =========================================================================
+// FEATURE 7: Dashboard Statistik Admin & Tren
+// =========================================================================
+
+export async function getDashboardStats(): Promise<any> {
+  // 1. Metrik KPI: Total, Terverifikasi, Lulus
+  const totalRes = await db('users').where({ role: 'student' }).count('id as count').first();
+  const terverifikasiRes = await db('users').where({ role: 'student', status_verifikasi: 'diverifikasi' }).count('id as count').first();
+  const lulusRes = await db('users').where({ role: 'student', status_kelulusan: 'lulus' }).count('id as count').first();
+
+  const total = parseInt(totalRes?.count as string || '0', 10);
+  const terverifikasi = parseInt(terverifikasiRes?.count as string || '0', 10);
+  const lulus = parseInt(lulusRes?.count as string || '0', 10);
+
+  // Target pendaftaran (misal 3000)
+  const targetPendaftaran = 3000;
+
+  // 2. Metrik KPI: Pendaftar per Fakultas
+  const pendaftarFakultas = await db('users')
+    .where({ role: 'student' })
+    .join('biodata', 'users.id', 'biodata.user_id')
+    .join('program_studi', 'biodata.pilihan_prodi_1', 'program_studi.id')
+    .select('program_studi.fakultas')
+    .count('users.id as count')
+    .groupBy('program_studi.fakultas');
+
+  const pendaftarFakultasMapped = pendaftarFakultas.map((pf) => ({
+    fakultas: pf.fakultas,
+    jumlah: parseInt(pf.count as string || '0', 10)
+  }));
+
+  // 3. Donut Chart: Status Verifikasi
+  const statusVerifikasiStats = await db('users')
+    .where({ role: 'student' })
+    .select('status_verifikasi')
+    .count('id as count')
+    .groupBy('status_verifikasi');
+
+  const statusVerifikasiMapped = statusVerifikasiStats.map((sv) => ({
+    status: sv.status_verifikasi,
+    jumlah: parseInt(sv.count as string || '0', 10)
+  }));
+
+  // 4. Bar Chart: Program Studi Terfavorit
+  const prodiTerfavoritStats = await db('users')
+    .where({ role: 'student' })
+    .join('biodata', 'users.id', 'biodata.user_id')
+    .join('program_studi', 'biodata.pilihan_prodi_1', 'program_studi.id')
+    .select('program_studi.nama as prodi_nama')
+    .count('users.id as count')
+    .groupBy('program_studi.nama')
+    .orderBy('count', 'desc')
+    .limit(5);
+
+  const prodiTerfavoritMapped = prodiTerfavoritStats.map((pt) => ({
+    program_studi: pt.prodi_nama,
+    jumlah: parseInt(pt.count as string || '0', 10)
+  }));
+
+  // 5. Daftar Pendaftar Terbaru (5 pendaftar)
+  const recentRegistrants = await db('users')
+    .where({ role: 'student' })
+    .select('id', 'nama_lengkap', 'email', 'created_at')
+    .orderBy('created_at', 'desc')
+    .limit(5);
+
+  const formatTanggal = (d: any) => {
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return d;
+  };
+
+  const recentRegistrantsFormatted = recentRegistrants.map((rr) => ({
+    id: rr.id,
+    nama_lengkap: rr.nama_lengkap,
+    email: rr.email,
+    tanggal_daftar: formatTanggal(rr.created_at)
+  }));
+
+  return {
+    kpi: {
+      total_pendaftar: total,
+      terverifikasi,
+      lulus,
+      target_pendaftaran: targetPendaftaran,
+      progress_target_persen: parseFloat(((total / targetPendaftaran) * 100).toFixed(2))
+    },
+    pendaftar_per_fakultas: pendaftarFakultasMapped,
+    chart_status_verifikasi: statusVerifikasiMapped,
+    chart_prodi_terfavorit: prodiTerfavoritMapped,
+    pendaftar_terbaru: recentRegistrantsFormatted
+  };
+}
+
+export async function getRegistrationTrends(): Promise<any[]> {
+  const formatTanggal = (d: any) => {
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return d;
+  };
+
+  const trends = await db('users')
+    .where({ role: 'student' })
+    .select(db.raw("to_char(created_at, 'YYYY-MM-DD') as tanggal"))
+    .count('id as jumlah')
+    .groupBy('tanggal')
+    .orderBy('tanggal', 'asc')
+    .limit(30);
+
+  return trends.map((t) => ({
+    tanggal: t.tanggal,
+    jumlah: parseInt(t.jumlah as string || '0', 10)
+  }));
+}
+
+
 
 

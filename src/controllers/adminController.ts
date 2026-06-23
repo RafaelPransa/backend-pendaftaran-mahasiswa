@@ -511,5 +511,44 @@ export async function verifikasiDokumen(req: Request, res: Response): Promise<Re
   }
 }
 
+// =========================================================================
+// FEATURE 7: Dashboard Statistik Admin & Tren
+// =========================================================================
+
+export async function ambilStatistikDashboard(req: Request, res: Response): Promise<Response> {
+  try {
+    const stats = await AdminModel.getDashboardStats();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil statistik Dashboard Admin.',
+      data: stats
+    });
+  } catch (error) {
+    console.error('Error saat mengambil statistik dashboard:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ambilTrenPendaftaran(req: Request, res: Response): Promise<Response> {
+  try {
+    const data = await AdminModel.getRegistrationTrends();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil data tren pendaftaran.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil tren pendaftaran:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+
 
 
