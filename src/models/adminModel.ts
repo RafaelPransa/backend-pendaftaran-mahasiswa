@@ -160,4 +160,61 @@ export async function updateKrsStatus(
     .returning('*');
 }
 
+// =========================================================================
+// FEATURE 6: Verifikasi Dokumen Per Berkas
+// =========================================================================
+
+export async function getAllDocuments(): Promise<any[]> {
+  return await db('dokumen')
+    .join('users', 'dokumen.user_id', 'users.id')
+    .select(
+      'dokumen.id as dokumen_id',
+      'dokumen.user_id',
+      'users.nama_lengkap',
+      'users.email',
+      'dokumen.ktp',
+      'dokumen.ktp_status',
+      'dokumen.ktp_catatan',
+      'dokumen.kartu_keluarga',
+      'dokumen.kartu_keluarga_status',
+      'dokumen.kartu_keluarga_catatan',
+      'dokumen.ijazah_skl',
+      'dokumen.ijazah_skl_status',
+      'dokumen.ijazah_skl_catatan',
+      'dokumen.pas_foto',
+      'dokumen.pas_foto_status',
+      'dokumen.pas_foto_catatan',
+      'dokumen.created_at',
+      'dokumen.updated_at'
+    )
+    .orderBy('dokumen.updated_at', 'desc');
+}
+
+export async function updateDocumentStatus(
+  userId: string,
+  fileType: string,
+  status: string,
+  catatan: string | null
+): Promise<any> {
+  const allowedFields = ['ktp', 'kartu_keluarga', 'ijazah_skl', 'pas_foto'];
+  if (!allowedFields.includes(fileType)) {
+    throw new Error(`File type '${fileType}' tidak didukung.`);
+  }
+
+  const updateData: any = {};
+  updateData[`${fileType}_status`] = status;
+  updateData[`${fileType}_catatan`] = catatan;
+
+  const [updated] = await db('dokumen')
+    .where({ user_id: userId })
+    .update(updateData)
+    .returning('*');
+  return updated;
+}
+
+export async function getDocumentByUserId(userId: string): Promise<any | undefined> {
+  return await db('dokumen').where({ user_id: userId }).first();
+}
+
+
 

@@ -437,4 +437,79 @@ export async function verifikasiKrs(req: Request, res: Response): Promise<Respon
   }
 }
 
+// =========================================================================
+// FEATURE 6: Verifikasi Dokumen Per Berkas
+// =========================================================================
+
+export async function ambilSemuaDokumen(req: Request, res: Response): Promise<Response> {
+  try {
+    const data = await AdminModel.getAllDocuments();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar pengajuan berkas dokumen.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil semua dokumen:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function verifikasiDokumen(req: Request, res: Response): Promise<Response> {
+  try {
+    const userId = req.params.userId as string;
+    const { jenis_dokumen, status, catatan } = req.body;
+
+    if (!jenis_dokumen || !status) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kolom jenis_dokumen dan status wajib diisi!'
+      });
+    }
+
+    const allowedFields = ['ktp', 'kartu_keluarga', 'ijazah_skl', 'pas_foto'];
+    if (!allowedFields.includes(jenis_dokumen)) {
+      return res.status(400).json({
+        success: false,
+        message: `Jenis dokumen tidak valid! Harus salah satu dari: ${allowedFields.join(', ')}`
+      });
+    }
+
+    const allowedStatus = ['belum_diverifikasi', 'disetujui', 'ditolak'];
+    if (!allowedStatus.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status verifikasi tidak valid! Harus salah satu dari: ${allowedStatus.join(', ')}`
+      });
+    }
+
+    // Cek apakah dokumen user ada
+    const userDocs = await AdminModel.getDocumentByUserId(userId);
+    if (!userDocs) {
+      return res.status(404).json({
+        success: false,
+        message: 'Dokumen pendaftar tersebut tidak ditemukan atau belum pernah di-upload!'
+      });
+    }
+
+    const updated = await AdminModel.updateDocumentStatus(userId, jenis_dokumen, status, catatan || null);
+
+    return res.status(200).json({
+      success: true,
+      message: `Status verifikasi berkas '${jenis_dokumen}' berhasil di-update menjadi '${status}'.`,
+      data: updated
+    });
+  } catch (error) {
+    console.error('Error saat verifikasi dokumen:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+
 
