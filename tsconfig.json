@@ -11,6 +11,7 @@
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "baseUrl": "."
   },
   "include": ["src/**/*", "index.ts", "knexfile.ts"]
