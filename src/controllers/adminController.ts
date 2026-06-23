@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import knex from 'knex';
+import bcrypt from 'bcrypt';
 import config from '../../knexfile';
 import * as AdminModel from '../models/adminModel';
 
@@ -704,7 +705,66 @@ export async function eksporPendaftarCsv(req: Request, res: Response): Promise<a
   }
 }
 
+// =========================================================================
+// FEATURE 9: Reset Kata Sandi Staff
+// =========================================================================
 
+export async function resetPasswordStaff(req: Request, res: Response): Promise<Response> {
+  try {
+    const { email, id, password, confirmPassword } = req.body;
 
+    if (!email && !id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email atau ID staff wajib diisi untuk mengidentifikasi pengguna!'
+      });
+    }
 
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password baru wajib diisi dan minimal 6 karakter!'
+      });
+    }
 
+    if (confirmPassword && password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Konfirmasi password baru tidak cocok!'
+      });
+    }
+
+    // Cari staff/admin
+    const staff = await AdminModel.findStaffUser({ email, id });
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff/Admin dengan email atau ID tersebut tidak ditemukan!'
+      });
+    }
+
+    // Hash password baru
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Update password di DB
+    const updated = await AdminModel.updateStaffPassword(staff.id, passwordHash);
+
+    return res.status(200).json({
+      success: true,
+      message: `Password staff/admin '${updated.nama_lengkap}' berhasil di-reset.`,
+      data: {
+        id: updated.id,
+        nama_lengkap: updated.nama_lengkap,
+        email: updated.email,
+        role: updated.role,
+        updated_at: updated.updated_at
+      }
+    });
+  } catch (error) {
+    console.error('Error saat reset password staff:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}

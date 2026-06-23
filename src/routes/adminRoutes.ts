@@ -52,4 +52,9 @@ router.get('/pendaftar/export', adminController.eksporPendaftarCsv);
 router.get('/pendaftar/:userId', adminController.ambilDetailPendaftar);
 router.put('/pendaftar/:userId/status', adminController.ubahStatusKelulusanPendaftar);
 
+// =========================================================================
+// FEATURE 9: Reset Kata Sandi Staff
+// =========================================================================
+router.post('/staff/reset-password', adminController.resetPasswordStaff);
+
 export default router;

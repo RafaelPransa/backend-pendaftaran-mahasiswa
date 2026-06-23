@@ -438,7 +438,29 @@ export async function getPendaftarDetail(userId: string): Promise<any> {
   };
 }
 
+// =========================================================================
+// FEATURE 9: Reset Kata Sandi Staff
+// =========================================================================
 
+export async function findStaffUser(identifier: { email?: string; id?: string }): Promise<any> {
+  const query = db('users').whereIn('role', ['admin', 'staff']);
+  if (identifier.email) {
+    query.where({ email: identifier.email.toLowerCase().trim() });
+  } else if (identifier.id) {
+    query.where({ id: identifier.id });
+  } else {
+    return null;
+  }
+  return await query.first();
+}
 
-
-
+export async function updateStaffPassword(userId: string, passwordHash: string): Promise<any> {
+  const [updatedUser] = await db('users')
+    .where({ id: userId })
+    .update({
+      password: passwordHash,
+      updated_at: db.fn.now()
+    })
+    .returning(['id', 'nama_lengkap', 'email', 'role', 'updated_at']);
+  return updatedUser;
+}
