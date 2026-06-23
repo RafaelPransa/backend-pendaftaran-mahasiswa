@@ -16,4 +16,13 @@ router.post('/prodi', adminController.tambahProdi);
 router.put('/prodi/:id', adminController.ubahProdi);
 router.delete('/prodi/:id', adminController.hapusProdi);
 
+// =========================================================================
+// FEATURE 4: CRUD Pengumuman
+// =========================================================================
+router.get('/pengumuman', adminController.ambilSemuaPengumuman);
+router.get('/pengumuman/:id', adminController.ambilDetailPengumuman);
+router.post('/pengumuman', adminController.tambahPengumuman);
+router.put('/pengumuman/:id', adminController.ubahPengumuman);
+router.delete('/pengumuman/:id', adminController.hapusPengumuman);
+
 export default router;

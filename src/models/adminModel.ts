@@ -42,3 +42,40 @@ export async function deleteProdi(id: string): Promise<number> {
 export async function getProdiByKode(kode: string): Promise<any | undefined> {
   return await db('program_studi').where({ kode }).first();
 }
+
+// =========================================================================
+// FEATURE 4: CRUD Pengumuman
+// =========================================================================
+
+export interface Pengumuman {
+  id?: string;
+  judul: string;
+  konten: string;
+  kategori: string;
+}
+
+export async function getAllPengumuman(): Promise<any[]> {
+  return await db('pengumuman').select('*').orderBy('created_at', 'desc');
+}
+
+export async function getPengumumanById(id: string): Promise<any | undefined> {
+  return await db('pengumuman').where({ id }).first();
+}
+
+export async function createPengumuman(data: Pengumuman): Promise<any> {
+  const [newPengumuman] = await db('pengumuman').insert(data).returning('*');
+  return newPengumuman;
+}
+
+export async function updatePengumuman(id: string, data: Partial<Pengumuman>): Promise<any> {
+  const [updatedPengumuman] = await db('pengumuman')
+    .where({ id })
+    .update(data)
+    .returning('*');
+  return updatedPengumuman;
+}
+
+export async function deletePengumuman(id: string): Promise<number> {
+  return await db('pengumuman').where({ id }).del();
+}
+

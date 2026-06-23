@@ -168,3 +168,164 @@ export async function hapusProdi(req: Request, res: Response): Promise<Response>
     });
   }
 }
+
+// =========================================================================
+// FEATURE 4: CRUD Pengumuman
+// =========================================================================
+
+export async function ambilSemuaPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    const data = await AdminModel.getAllPengumuman();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar pengumuman.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil pengumuman:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ambilDetailPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    const id = req.params.id as string;
+    const pengumuman = await AdminModel.getPengumumanById(id);
+    if (!pengumuman) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengumuman tidak ditemukan!'
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil detail pengumuman.',
+      data: pengumuman
+    });
+  } catch (error) {
+    console.error('Error saat mengambil detail pengumuman:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function tambahPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    const { judul, konten, kategori } = req.body;
+    if (!judul || !konten || !kategori) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kolom judul, konten, dan kategori wajib diisi!'
+      });
+    }
+
+    if (kategori !== 'PMB' && kategori !== 'Akademik') {
+      return res.status(400).json({
+        success: false,
+        message: "Kategori harus salah satu dari: 'PMB' atau 'Akademik'!"
+      });
+    }
+
+    const pengumumanBaru = await AdminModel.createPengumuman({ judul, konten, kategori });
+    return res.status(201).json({
+      success: true,
+      message: 'Pengumuman baru berhasil ditambahkan!',
+      data: pengumumanBaru
+    });
+  } catch (error) {
+    console.error('Error saat tambah pengumuman:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function ubahPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    const id = req.params.id as string;
+    const { judul, konten, kategori } = req.body;
+
+    const pengumuman = await AdminModel.getPengumumanById(id);
+    if (!pengumuman) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengumuman tidak ditemukan!'
+      });
+    }
+
+    const dataUpdate: Partial<AdminModel.Pengumuman> = {};
+    if (judul !== undefined) {
+      if (judul.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Judul tidak boleh kosong!' });
+      }
+      dataUpdate.judul = judul;
+    }
+    if (konten !== undefined) {
+      if (konten.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Konten tidak boleh kosong!' });
+      }
+      dataUpdate.konten = konten;
+    }
+    if (kategori !== undefined) {
+      if (kategori !== 'PMB' && kategori !== 'Akademik') {
+        return res.status(400).json({
+          success: false,
+          message: "Kategori harus salah satu dari: 'PMB' atau 'Akademik'!"
+        });
+      }
+      dataUpdate.kategori = kategori;
+    }
+
+    if (Object.keys(dataUpdate).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tidak ada data pengumuman yang dikirim untuk diubah!'
+      });
+    }
+
+    const pengumumanDiubah = await AdminModel.updatePengumuman(id, dataUpdate);
+    return res.status(200).json({
+      success: true,
+      message: 'Pengumuman berhasil diperbarui!',
+      data: pengumumanDiubah
+    });
+  } catch (error) {
+    console.error('Error saat ubah pengumuman:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function hapusPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    const id = req.params.id as string;
+    const pengumuman = await AdminModel.getPengumumanById(id);
+    if (!pengumuman) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengumuman tidak ditemukan!'
+      });
+    }
+
+    await AdminModel.deletePengumuman(id);
+    return res.status(200).json({
+      success: true,
+      message: `Pengumuman dengan judul '${pengumuman.judul}' berhasil dihapus.`
+    });
+  } catch (error) {
+    console.error('Error saat hapus pengumuman:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
