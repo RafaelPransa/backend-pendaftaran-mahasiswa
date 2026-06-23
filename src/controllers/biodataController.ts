@@ -13,6 +13,8 @@ export async function isiBiodata(req: Request, res: Response): Promise<Response>
       kota_kabupaten,
       kecamatan,
       kode_pos,
+      pilihan_prodi_1,
+      pilihan_prodi_2,
     } = req.body;
 
     // Data ID user diambil dari Token JWT yang sukses lolos dari satpam middleware
@@ -73,6 +75,8 @@ export async function isiBiodata(req: Request, res: Response): Promise<Response>
       kota_kabupaten,
       kecamatan,
       kode_pos,
+      pilihan_prodi_1: pilihan_prodi_1 || null,
+      pilihan_prodi_2: pilihan_prodi_2 || null,
     });
 
     // Respon sukses 201 created ke frontend
@@ -122,6 +126,8 @@ export async function ubahBiodata(req: Request, res: Response): Promise<Response
       kota_kabupaten,
       kecamatan,
       kode_pos,
+      pilihan_prodi_1,
+      pilihan_prodi_2,
     } = req.body;
 
     const dataUpdate: Partial<BiodataModel.Biodata> = {};
@@ -152,9 +158,12 @@ export async function ubahBiodata(req: Request, res: Response): Promise<Response
     if (kota_kabupaten !== undefined) dataUpdate.kota_kabupaten = kota_kabupaten;
     if (kecamatan !== undefined) dataUpdate.kecamatan = kecamatan;
     if (kode_pos !== undefined) dataUpdate.kode_pos = kode_pos;
+    if (pilihan_prodi_1 !== undefined) dataUpdate.pilihan_prodi_1 = pilihan_prodi_1 || null;
+    if (pilihan_prodi_2 !== undefined) dataUpdate.pilihan_prodi_2 = pilihan_prodi_2 || null;
 
-    // Validasi nilai kosong jika disertakan
+    // Validasi nilai kosong jika disertakan (kecuali pilihan prodi yang boleh null)
     for (const key in dataUpdate) {
+      if (key === 'pilihan_prodi_1' || key === 'pilihan_prodi_2') continue;
       const value = dataUpdate[key as keyof Partial<BiodataModel.Biodata>];
       if (value === null || (typeof value === 'string' && value.trim() === '')) {
         return res.status(400).json({
@@ -180,6 +189,92 @@ export async function ubahBiodata(req: Request, res: Response): Promise<Response
     });
   } catch (error) {
     console.error('Error saat mengubah biodata:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// POST /api/biodata/rapor
+export async function isiRapor(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const { semester, matematika, bahasa_indonesia, bahasa_inggris, ipa, ips } = req.body;
+
+    if (semester === undefined || matematika === undefined || bahasa_indonesia === undefined || bahasa_inggris === undefined || ipa === undefined || ips === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Semua kolom nilai rapor wajib diisi!',
+      });
+    }
+
+    const semNum = parseInt(semester, 10);
+    if (isNaN(semNum) || semNum < 1 || semNum > 5) {
+      return res.status(400).json({
+        success: false,
+        message: 'Semester harus berupa angka antara 1 s.d. 5!',
+      });
+    }
+
+    const dataRapor = {
+      matematika: parseFloat(matematika),
+      bahasa_indonesia: parseFloat(bahasa_indonesia),
+      bahasa_inggris: parseFloat(bahasa_inggris),
+      ipa: parseFloat(ipa),
+      ips: parseFloat(ips),
+    };
+
+    if (isNaN(dataRapor.matematika) || isNaN(dataRapor.bahasa_indonesia) || isNaN(dataRapor.bahasa_inggris) || isNaN(dataRapor.ipa) || isNaN(dataRapor.ips)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Semua nilai rapor harus berupa angka yang valid!',
+      });
+    }
+
+    const raporBaru = await BiodataModel.saveOrUpdateRapor(userId, semNum, dataRapor);
+
+    return res.status(200).json({
+      success: true,
+      message: `Nilai rapor semester ${semNum} berhasil disimpan!`,
+      data: raporBaru,
+    });
+  } catch (error) {
+    console.error('Error saat menyimpan rapor:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// GET /api/biodata/rapor
+export async function getRapor(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const rapor = await BiodataModel.getRaporByUserId(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil data nilai rapor.',
+      data: rapor,
+    });
+  } catch (error) {
+    console.error('Error saat mengambil rapor:', error);
     return res.status(500).json({
       success: false,
       message: 'Terjadi kesalahan internal di server',

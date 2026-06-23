@@ -41,11 +41,18 @@ export async function getDashboardData(userId: string): Promise<any> {
   const khsSem = parseInt(maxKhs?.max_sem as string || '0', 10);
   const semesterAktif = Math.max(krsSem, khsSem + 1, 1);
 
-  // Pengumuman Akademik
-  const pengumuman = [
-    { id: 1, judul: 'Pemilihan KRS Semester Ganjil 2026/2027', tanggal: '2026-06-20', konten: 'Pengisian KRS dimulai dari tanggal 22 Juni s.d. 30 Juni 2026.' },
-    { id: 2, judul: 'Pembayaran UKT Semester Ganjil', tanggal: '2026-06-15', konten: 'Batas akhir pembayaran UKT adalah tanggal 19 Juni 2026.' }
-  ];
+  // Pengumuman Akademik dinamis dari database
+  const pengumumanDb = await db('pengumuman')
+    .where({ kategori: 'Akademik' })
+    .orderBy('created_at', 'desc')
+    .limit(5);
+
+  const pengumuman = pengumumanDb.map((p) => ({
+    id: p.id,
+    judul: p.judul,
+    tanggal: p.created_at instanceof Date ? p.created_at.toISOString().split('T')[0] : p.created_at,
+    konten: p.konten,
+  }));
 
   return {
     ipk,
