@@ -281,3 +281,30 @@ export async function getRapor(req: Request, res: Response): Promise<Response> {
     });
   }
 }
+
+// GET /api/biodata/biodata
+export async function getBiodata(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const userId = req.user.id;
+    const biodata = await BiodataModel.findByUserId(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil data biodata.',
+      data: biodata || null,
+    });
+  } catch (error) {
+    console.error('Error saat mengambil biodata:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}

@@ -4,6 +4,10 @@ import config from '../../knexfile';
 const db = knex(config.development);
 
 export interface StatusPendaftaran {
+  nama_lengkap: string;
+  nik: string;
+  nomor_wa: string;
+  email: string;
   status_verifikasi: string;
   status_kelulusan: string;
   catatan: string | null;
@@ -12,7 +16,7 @@ export interface StatusPendaftaran {
 // Mendapatkan status pendaftaran berdasarkan ID User
 export async function getStatusByUserId(userId: string): Promise<StatusPendaftaran | undefined> {
   return await db('users')
-    .select('status_verifikasi', 'status_kelulusan', 'catatan')
+    .select('nama_lengkap', 'nik', 'nomor_wa', 'email', 'status_verifikasi', 'status_kelulusan', 'catatan')
     .where({ id: userId })
     .first();
 }

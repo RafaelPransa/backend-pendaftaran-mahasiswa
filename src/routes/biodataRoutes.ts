@@ -10,6 +10,9 @@ router.post('/biodata', authenticateToken, biodataController.isiBiodata);
 // Endpoint: PUT api/biodata
 router.put('/biodata', authenticateToken, biodataController.ubahBiodata);
 
+// Endpoint: GET api/biodata
+router.get('/biodata', authenticateToken, biodataController.getBiodata);
+
 // Endpoint: POST api/biodata/rapor
 router.post('/rapor', authenticateToken, biodataController.isiRapor);
 
