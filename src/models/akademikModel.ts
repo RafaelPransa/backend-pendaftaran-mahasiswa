@@ -260,8 +260,8 @@ export async function payUkt(userId: string, semester: number): Promise<any> {
   const [updatedRecord] = await db('keuangan')
     .where({ user_id: userId, semester })
     .update({
-      status: 'lunas',
-      tanggal_bayar: new Date()
+      status: 'menunggu_verifikasi',
+      updated_at: new Date()
     })
     .returning('*');
   return updatedRecord;

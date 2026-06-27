@@ -16,7 +16,7 @@ export interface StatusPendaftaran {
 // Mendapatkan status pendaftaran berdasarkan ID User
 export async function getStatusByUserId(userId: string): Promise<StatusPendaftaran | undefined> {
   return await db('users')
-    .select('nama_lengkap', 'nik', 'nomor_wa', 'email', 'status_verifikasi', 'status_kelulusan', 'catatan')
+    .select('nama_lengkap', 'nik', 'nomor_wa', 'email', 'status_verifikasi', 'status_kelulusan', 'catatan', 'nim')
     .where({ id: userId })
     .first();
 }
