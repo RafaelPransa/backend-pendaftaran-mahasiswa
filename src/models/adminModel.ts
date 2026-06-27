@@ -168,7 +168,7 @@ export async function getAllDocuments(): Promise<any[]> {
   return await db('dokumen')
     .join('users', 'dokumen.user_id', 'users.id')
     .select(
-      'dokumen.id as dokumen_id',
+      'dokumen.user_id as dokumen_id',
       'dokumen.user_id',
       'users.nama_lengkap',
       'users.email',
@@ -422,9 +422,17 @@ export async function getPendaftarDetail(userId: string): Promise<any> {
     .where({ user_id: userId })
     .first();
 
-  const rapor = await db('nilai_rapor')
+  const raporRow = await db('nilai_rapor')
     .where({ user_id: userId })
-    .orderBy('semester', 'asc');
+    .first();
+
+  const rapor = raporRow ? [
+    { semester: 1, matematika: raporRow.semester_1, bahasa_indonesia: raporRow.semester_1, bahasa_inggris: raporRow.semester_1, ipa: raporRow.semester_1, ips: raporRow.semester_1 },
+    { semester: 2, matematika: raporRow.semester_2, bahasa_indonesia: raporRow.semester_2, bahasa_inggris: raporRow.semester_2, ipa: raporRow.semester_2, ips: raporRow.semester_2 },
+    { semester: 3, matematika: raporRow.semester_3, bahasa_indonesia: raporRow.semester_3, bahasa_inggris: raporRow.semester_3, ipa: raporRow.semester_3, ips: raporRow.semester_3 },
+    { semester: 4, matematika: raporRow.semester_4, bahasa_indonesia: raporRow.semester_4, bahasa_inggris: raporRow.semester_4, ipa: raporRow.semester_4, ips: raporRow.semester_4 },
+    { semester: 5, matematika: raporRow.semester_5, bahasa_indonesia: raporRow.semester_5, bahasa_inggris: raporRow.semester_5, ipa: raporRow.semester_5, ips: raporRow.semester_5 },
+  ] : [];
 
   const dokumen = await db('dokumen')
     .where({ user_id: userId })
@@ -443,7 +451,7 @@ export async function getPendaftarDetail(userId: string): Promise<any> {
 // =========================================================================
 
 export async function findStaffUser(identifier: { email?: string; id?: string }): Promise<any> {
-  const query = db('users').whereIn('role', ['admin', 'staff']);
+  const query = db('users').where({ role: 'staf administration' });
   if (identifier.email) {
     query.where({ email: identifier.email.toLowerCase().trim() });
   } else if (identifier.id) {

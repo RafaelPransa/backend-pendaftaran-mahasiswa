@@ -28,7 +28,7 @@ router.get('/dashboard-bersama', authenticateToken, (req: Request, res: Response
 router.get(
   '/dashboard-admin',
   authenticateToken,
-  authenticateRoles('admin'),
+  authenticateRoles('staf administration'),
   (req: Request, res: Response) => {
     res.json({
       success: true,

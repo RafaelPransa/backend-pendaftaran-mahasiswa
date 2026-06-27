@@ -4,8 +4,8 @@ import { authenticateToken, authenticateRoles } from '../middlewares/authMiddlew
 
 const router = Router();
 
-// Proteksi rute admin: Semua rute di bawah router ini wajib Login (authenticateToken) dan ber-Role Admin.
-router.use(authenticateToken, authenticateRoles('admin'));
+// Proteksi rute admin: Semua rute di bawah router ini wajib Login (authenticateToken) dan ber-Role Staf Administrasi.
+router.use(authenticateToken, authenticateRoles('staf administration'));
 
 // =========================================================================
 // FEATURE 3: CRUD Program Studi
