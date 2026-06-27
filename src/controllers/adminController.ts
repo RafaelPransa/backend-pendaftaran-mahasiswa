@@ -783,3 +783,95 @@ export async function resetPasswordStaff(req: Request, res: Response): Promise<R
     });
   }
 }
+
+export async function ambilAjuanKeuangan(req: Request, res: Response): Promise<Response> {
+  try {
+    const list = await db('keuangan')
+      .join('users', 'keuangan.user_id', 'users.id')
+      .leftJoin('biodata', 'users.id', 'biodata.user_id')
+      .leftJoin('program_studi as p1', 'biodata.pilihan_prodi_1', 'p1.id')
+      .select(
+        'keuangan.id as keuangan_id',
+        'users.id as user_id',
+        'users.nama_lengkap',
+        'users.nik',
+        'keuangan.semester',
+        'keuangan.tagihan',
+        'keuangan.status as status_keuangan',
+        'keuangan.tanggal_bayar',
+        'p1.nama as prodi_nama'
+      )
+      .whereIn('keuangan.status', ['menunggu_verifikasi', 'lunas'])
+      .orderBy('keuangan.updated_at', 'desc');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil ajuan keuangan.',
+      data: list
+    });
+  } catch (error) {
+    console.error('Error saat mengambil ajuan keuangan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}
+
+export async function verifikasiKeuangan(req: Request, res: Response): Promise<Response> {
+  try {
+    const { keuanganId } = req.params;
+    const { status } = req.body; // 'lunas' atau 'belum_bayar'
+
+    if (!['lunas', 'belum_bayar'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status verifikasi tidak valid!'
+      });
+    }
+
+    const keuangan = await db('keuangan').where({ id: keuanganId }).first();
+    if (!keuangan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data tagihan tidak ditemukan!'
+      });
+    }
+
+    if (status === 'lunas') {
+      // 1. Update status tagihan UKT menjadi lunas
+      await db('keuangan').where({ id: keuanganId }).update({
+        status: 'lunas',
+        tanggal_bayar: new Date()
+      });
+
+      // 2. Generate NIM resmi
+      const year = new Date().getFullYear();
+      const randomNum = Math.floor(1000 + Math.random() * 9000);
+      const nim = `${year}10${randomNum}`;
+
+      // 3. Update status kelulusan user menjadi 'aktif' (Mahasiswa Aktif) dan simpan NIM
+      await db('users').where({ id: keuangan.user_id }).update({
+        status_kelulusan: 'aktif',
+        nim: nim
+      });
+    } else {
+      // Jika ditolak / diset ke belum_bayar
+      await db('keuangan').where({ id: keuanganId }).update({
+        status: 'belum_bayar',
+        tanggal_bayar: null
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil memverifikasi pembayaran UKT.'
+    });
+  } catch (error) {
+    console.error('Error saat verifikasi keuangan:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server'
+    });
+  }
+}

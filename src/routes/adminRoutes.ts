@@ -57,4 +57,10 @@ router.put('/pendaftar/:userId/status', adminController.ubahStatusKelulusanPenda
 // =========================================================================
 router.post('/staff/reset-password', adminController.resetPasswordStaff);
 
+// =========================================================================
+// FEATURE 10: Verifikasi Keuangan & Registrasi Ulang (NIM Generator)
+// =========================================================================
+router.get('/keuangan', adminController.ambilAjuanKeuangan);
+router.put('/keuangan/:keuanganId/verifikasi', adminController.verifikasiKeuangan);
+
 export default router;
