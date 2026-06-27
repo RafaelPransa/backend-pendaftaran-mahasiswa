@@ -451,7 +451,7 @@ export async function getPendaftarDetail(userId: string): Promise<any> {
 // =========================================================================
 
 export async function findStaffUser(identifier: { email?: string; id?: string }): Promise<any> {
-  const query = db('users').whereIn('role', ['admin', 'staff']);
+  const query = db('users').where({ role: 'staf administration' });
   if (identifier.email) {
     query.where({ email: identifier.email.toLowerCase().trim() });
   } else if (identifier.id) {

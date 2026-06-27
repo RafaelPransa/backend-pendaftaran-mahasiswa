@@ -20,7 +20,7 @@ router.get('/status', authenticateToken, portalController.getStatusSeleksi);
 router.put(
   '/admin/status/:userId',
   authenticateToken,
-  authenticateRoles('admin'),
+  authenticateRoles('staf administration'),
   portalController.updateStatusSeleksi
 );
 
