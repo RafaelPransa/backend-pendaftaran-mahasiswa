@@ -168,7 +168,7 @@ export async function getAllDocuments(): Promise<any[]> {
   return await db('dokumen')
     .join('users', 'dokumen.user_id', 'users.id')
     .select(
-      'dokumen.id as dokumen_id',
+      'dokumen.user_id as dokumen_id',
       'dokumen.user_id',
       'users.nama_lengkap',
       'users.email',
