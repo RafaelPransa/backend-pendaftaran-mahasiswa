@@ -124,4 +124,7 @@ export async function getBiodataWithProdiNames(userId: string): Promise<any> {
   return biodata;
 }
 
-
+// Fungsi untuk mengambil semua daftar program studi untuk dropdown formulir mahasiswa
+export async function getAllProdi(): Promise<any[]> {
+  return await db('program_studi').select('id', 'kode', 'nama', 'fakultas').orderBy('nama', 'asc');
+}
