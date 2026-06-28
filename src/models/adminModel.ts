@@ -231,7 +231,7 @@ export async function getDashboardStats(): Promise<any> {
   const lulus = parseInt(lulusRes?.count as string || '0', 10);
 
   // Target pendaftaran (misal 3000)
-  const targetPendaftaran = 3000;
+  const targetPendaftaran = 2000;
 
   // 2. Metrik KPI: Pendaftar per Fakultas
   const pendaftarFakultas = await db('users')
