@@ -100,7 +100,7 @@ export async function updateStatusSeleksi(req: Request, res: Response): Promise<
     }
 
     if (status_kelulusan !== undefined) {
-      const allowedKelulusan = ['proses', 'lulus', 'tidak_lulus'];
+      const allowedKelulusan = ['proses', 'lulus', 'tidak_lulus', 'aktif'];
       if (!allowedKelulusan.includes(status_kelulusan)) {
         return res.status(400).json({
           success: false,
