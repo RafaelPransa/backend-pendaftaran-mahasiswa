@@ -79,3 +79,15 @@ export async function getPersyaratan(): Promise<string[]> {
   return rows.map((r) => r.deskripsi);
 }
 
+// Mendapatkan daftar pengumuman untuk portal mahasiswa
+export async function getPengumuman(): Promise<any[]> {
+  return await db('pengumuman')
+    .select('id', 'judul', 'konten', 'kategori', 'created_at')
+    .orderBy('created_at', 'desc');
+}
+
+// Mendapatkan detail pengumuman berdasarkan ID
+export async function getPengumumanById(id: string): Promise<any | undefined> {
+  return await db('pengumuman').where({ id }).first();
+}
+

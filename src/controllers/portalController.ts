@@ -100,7 +100,7 @@ export async function updateStatusSeleksi(req: Request, res: Response): Promise<
     }
 
     if (status_kelulusan !== undefined) {
-      const allowedKelulusan = ['proses', 'lulus', 'tidak_lulus'];
+      const allowedKelulusan = ['proses', 'lulus', 'tidak_lulus', 'aktif'];
       if (!allowedKelulusan.includes(status_kelulusan)) {
         return res.status(400).json({
           success: false,
@@ -130,6 +130,66 @@ export async function updateStatusSeleksi(req: Request, res: Response): Promise<
     });
   } catch (error) {
     console.error('Error saat mengupdate status pendaftaran:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// 5. GET /api/portal/pengumuman
+export async function getPortalPengumuman(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const data = await PortalModel.getPengumuman();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar pengumuman.',
+      data
+    });
+  } catch (error) {
+    console.error('Error saat mengambil pengumuman portal:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}
+
+// 6. GET /api/portal/pengumuman/:id
+export async function getPortalPengumumanDetail(req: Request, res: Response): Promise<Response> {
+  try {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+
+    const { id } = req.params;
+    const pengumuman = await PortalModel.getPengumumanById(id as string);
+
+    if (!pengumuman) {
+      return res.status(404).json({
+        success: false,
+        message: 'Pengumuman tidak ditemukan!',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil detail pengumuman.',
+      data: pengumuman
+    });
+  } catch (error) {
+    console.error('Error saat mengambil detail pengumuman portal:', error);
     return res.status(500).json({
       success: false,
       message: 'Terjadi kesalahan internal di server',

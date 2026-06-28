@@ -33,7 +33,14 @@ export async function getDashboard(req: Request, res: Response): Promise<Respons
 // GET /api/akademik/krs/kelas
 export async function getKelasTersedia(req: Request, res: Response): Promise<Response> {
   try {
-    const data = await AkademikModel.getAvailableKelas();
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akses ditolak. Silahkan login terlebih dahulu',
+      });
+    }
+    const userId = req.user.id;
+    const data = await AkademikModel.getAvailableKelas(userId);
     return res.status(200).json({
       success: true,
       message: 'Berhasil mengambil daftar kelas kuliah yang tersedia.',

@@ -72,9 +72,11 @@ export interface KrsEnrollment {
   tahun_akademik: string;
 }
 
-// Mendapatkan daftar kelas yang tersedia untuk diprogram
-export async function getAvailableKelas(): Promise<any[]> {
-  const available = await db('kelas')
+export async function getAvailableKelas(userId: string): Promise<any[]> {
+  const biodata = await db('biodata').where({ user_id: userId }).select('pilihan_prodi_1').first();
+  const prodiId = biodata ? biodata.pilihan_prodi_1 : null;
+
+  const query = db('kelas')
     .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
     .select(
       'kelas.id as kelas_id',
@@ -88,6 +90,12 @@ export async function getAvailableKelas(): Promise<any[]> {
       'kelas.dosen',
       'kelas.kuota'
     );
+
+  if (prodiId) {
+    query.where('matakuliah.prodi_id', prodiId);
+  }
+
+  const available = await query;
 
   const enrollments = await db('krs')
     .select('kelas_id')
@@ -124,7 +132,9 @@ export async function getKrsByUserId(userId: string): Promise<any[]> {
       'kelas.ruangan',
       'kelas.dosen',
       'krs.semester',
-      'krs.tahun_akademik'
+      'krs.tahun_akademik',
+      'krs.status_persetujuan',
+      'krs.catatan'
     )
     .where('krs.user_id', userId);
 }
@@ -172,7 +182,7 @@ export async function enrollKrs(
 
 // Feature 3: KHS (Kartu Hasil Studi)
 export async function getKhsBySemester(userId: string, semester: number): Promise<any> {
-  const listKhs = await db('khs')
+  let listKhs = await db('khs')
     .join('matakuliah', 'khs.matakuliah_id', 'matakuliah.id')
     .select(
       'khs.id as khs_id',
@@ -184,14 +194,43 @@ export async function getKhsBySemester(userId: string, semester: number): Promis
     )
     .where({ 'khs.user_id': userId, 'khs.semester': semester });
 
+  // Fallback to approved KRS for ongoing semester
+  if (listKhs.length === 0) {
+    const krsClasses = await db('krs')
+      .join('kelas', 'krs.kelas_id', 'kelas.id')
+      .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+      .select(
+        'krs.id as khs_id',
+        'matakuliah.kode as kode_matakuliah',
+        'matakuliah.nama as nama_matakuliah',
+        'matakuliah.sks'
+      )
+      .where({
+        'krs.user_id': userId,
+        'krs.semester': semester,
+        'krs.status_persetujuan': 'disetujui'
+      });
+
+    listKhs = krsClasses.map(c => ({
+      khs_id: c.khs_id,
+      kode_matakuliah: c.kode_matakuliah,
+      nama_matakuliah: c.nama_matakuliah,
+      sks: c.sks,
+      nilai_angka: null,
+      nilai_huruf: '-'
+    }));
+  }
+
   let totalBobot = 0;
   let totalSks = 0;
 
   listKhs.forEach((item) => {
-    const nilai = parseFloat(item.nilai_angka as string);
-    const sks = parseInt(item.sks as string, 10);
-    totalBobot += nilai * sks;
-    totalSks += sks;
+    if (item.nilai_angka !== null && item.nilai_angka !== undefined) {
+      const nilai = parseFloat(item.nilai_angka as string);
+      const sks = parseInt(item.sks as string, 10);
+      totalBobot += nilai * sks;
+      totalSks += sks;
+    }
   });
 
   const ips = totalSks > 0 ? parseFloat((totalBobot / totalSks).toFixed(2)) : 0.0;
@@ -206,7 +245,7 @@ export async function getKhsBySemester(userId: string, semester: number): Promis
 
 // Feature 4: Transkrip Nilai
 export async function getTranskripData(userId: string): Promise<any> {
-  const grades = await db('khs')
+  let grades = await db('khs')
     .join('matakuliah', 'khs.matakuliah_id', 'matakuliah.id')
     .select(
       'khs.id as khs_id',
@@ -220,14 +259,47 @@ export async function getTranskripData(userId: string): Promise<any> {
     .orderBy('khs.semester', 'asc')
     .where('khs.user_id', userId);
 
+  // Append ongoing KRS courses (with '-' grade) if not already in KHS
+  const krsClasses = await db('krs')
+    .join('kelas', 'krs.kelas_id', 'kelas.id')
+    .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
+    .select(
+      'krs.id as khs_id',
+      'matakuliah.kode as kode_matakuliah',
+      'matakuliah.nama as nama_matakuliah',
+      'matakuliah.sks',
+      'krs.semester'
+    )
+    .where({
+      'krs.user_id': userId,
+      'krs.status_persetujuan': 'disetujui'
+    });
+
+  krsClasses.forEach(kc => {
+    const exists = grades.some(g => g.kode_matakuliah === kc.kode_matakuliah && g.semester === kc.semester);
+    if (!exists) {
+      grades.push({
+        khs_id: kc.khs_id,
+        kode_matakuliah: kc.kode_matakuliah,
+        nama_matakuliah: kc.nama_matakuliah,
+        sks: kc.sks,
+        semester: kc.semester,
+        nilai_angka: null,
+        nilai_huruf: '-'
+      });
+    }
+  });
+
   let totalBobot = 0;
   let totalSks = 0;
 
   grades.forEach((item) => {
-    const nilai = parseFloat(item.nilai_angka as string);
-    const sks = parseInt(item.sks as string, 10);
-    totalBobot += nilai * sks;
-    totalSks += sks;
+    if (item.nilai_angka !== null && item.nilai_angka !== undefined) {
+      const nilai = parseFloat(item.nilai_angka as string);
+      const sks = parseInt(item.sks as string, 10);
+      totalBobot += nilai * sks;
+      totalSks += sks;
+    }
   });
 
   const ipk = totalSks > 0 ? parseFloat((totalBobot / totalSks).toFixed(2)) : 0.0;

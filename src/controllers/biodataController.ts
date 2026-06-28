@@ -342,3 +342,21 @@ export async function getBiodata(req: Request, res: Response): Promise<Response>
     });
   }
 }
+
+// GET /api/biodata/prodi - Daftar program studi untuk dropdown formulir
+export async function getProdiList(req: Request, res: Response): Promise<Response> {
+  try {
+    const prodiList = await BiodataModel.getAllProdi();
+    return res.status(200).json({
+      success: true,
+      message: 'Berhasil mengambil daftar program studi.',
+      data: prodiList,
+    });
+  } catch (error) {
+    console.error('Error saat mengambil daftar prodi:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Terjadi kesalahan internal di server',
+    });
+  }
+}

@@ -19,4 +19,8 @@ router.post('/rapor', authenticateToken, biodataController.isiRapor);
 // Endpoint: GET api/biodata/rapor
 router.get('/rapor', authenticateToken, biodataController.getRapor);
 
+// Endpoint: GET api/biodata/prodi - Daftar program studi untuk dropdown formulir
+router.get('/prodi', authenticateToken, biodataController.getProdiList);
+
 export default router;
+
