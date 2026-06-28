@@ -72,9 +72,11 @@ export interface KrsEnrollment {
   tahun_akademik: string;
 }
 
-// Mendapatkan daftar kelas yang tersedia untuk diprogram
-export async function getAvailableKelas(): Promise<any[]> {
-  const available = await db('kelas')
+export async function getAvailableKelas(userId: string): Promise<any[]> {
+  const biodata = await db('biodata').where({ user_id: userId }).select('pilihan_prodi_1').first();
+  const prodiId = biodata ? biodata.pilihan_prodi_1 : null;
+
+  const query = db('kelas')
     .join('matakuliah', 'kelas.matakuliah_id', 'matakuliah.id')
     .select(
       'kelas.id as kelas_id',
@@ -88,6 +90,12 @@ export async function getAvailableKelas(): Promise<any[]> {
       'kelas.dosen',
       'kelas.kuota'
     );
+
+  if (prodiId) {
+    query.where('matakuliah.prodi_id', prodiId);
+  }
+
+  const available = await query;
 
   const enrollments = await db('krs')
     .select('kelas_id')
@@ -124,7 +132,9 @@ export async function getKrsByUserId(userId: string): Promise<any[]> {
       'kelas.ruangan',
       'kelas.dosen',
       'krs.semester',
-      'krs.tahun_akademik'
+      'krs.tahun_akademik',
+      'krs.status_persetujuan',
+      'krs.catatan'
     )
     .where('krs.user_id', userId);
 }
