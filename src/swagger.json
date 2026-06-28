@@ -207,6 +207,52 @@
       }
     },
     "/api/biodata/biodata": {
+      "get": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Mengambil Data Biodata Calon Mahasiswa",
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil data biodata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Berhasil mengambil data biodata." },
+                    "data": {
+                      "type": "object",
+                      "nullable": true,
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "user_id": { "type": "string", "format": "uuid" },
+                        "tempat_lahir": { "type": "string" },
+                        "tanggal_lahir": { "type": "string", "format": "date" },
+                        "jenis_kelamin": { "type": "string" },
+                        "agama": { "type": "string" },
+                        "alamat_lengkap": { "type": "string" },
+                        "provinsi": { "type": "string" },
+                        "kota_kabupaten": { "type": "string" },
+                        "kecamatan": { "type": "string" },
+                        "kode_pos": { "type": "string" },
+                        "pilihan_prodi_1": { "type": "string", "format": "uuid", "nullable": true },
+                        "pilihan_prodi_2": { "type": "string", "format": "uuid", "nullable": true },
+                        "pendidikan_terakhir": { "type": "string", "nullable": true },
+                        "nama_sekolah": { "type": "string", "nullable": true },
+                        "jurusan_sekolah": { "type": "string", "nullable": true },
+                        "tahun_lulus": { "type": "integer", "nullable": true },
+                        "nisn": { "type": "string", "nullable": true },
+                        "alamat_sekolah": { "type": "string", "nullable": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      },
       "post": {
         "tags": ["Biodata & Rapor"],
         "summary": "Isi Biodata Calon Mahasiswa Baru",
@@ -236,6 +282,41 @@
         },
         "responses": {
           "200": { "description": "Biodata berhasil diperbarui." }
+        }
+      }
+    },
+    "/api/biodata/prodi": {
+      "get": {
+        "tags": ["Biodata & Rapor"],
+        "summary": "Mengambil Daftar Program Studi Untuk Dropdown",
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil daftar program studi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Berhasil mengambil daftar program studi." },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": { "type": "string", "format": "uuid" },
+                          "kode": { "type": "string" },
+                          "nama": { "type": "string" },
+                          "fakultas": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
         }
       }
     },
@@ -336,6 +417,66 @@
         "summary": "Mengecek Status Seleksi Calon Mahasiswa",
         "responses": {
           "200": { "description": "Status kelulusan dan seleksi saat ini." }
+        }
+      }
+    },
+    "/api/portal/pengumuman": {
+      "get": {
+        "tags": ["Portal PMB"],
+        "summary": "Mengambil Daftar Pengumuman Untuk Calon Mahasiswa",
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil daftar pengumuman.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Berhasil mengambil daftar pengumuman." },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Pengumuman" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" }
+        }
+      }
+    },
+    "/api/portal/pengumuman/{id}": {
+      "get": {
+        "tags": ["Portal PMB"],
+        "summary": "Mengambil Detail Pengumuman Untuk Calon Mahasiswa",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil detail pengumuman.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Berhasil mengambil detail pengumuman." },
+                    "data": { "$ref": "#/components/schemas/Pengumuman" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "404": { "description": "Pengumuman tidak ditemukan!" }
         }
       }
     },
@@ -933,6 +1074,92 @@
         },
         "responses": {
           "200": { "description": "Status persetujuan KRS berhasil disimpan." }
+        }
+      }
+    },
+    "/api/admin/keuangan": {
+      "get": {
+        "tags": ["Admin: Verifikasi Keuangan"],
+        "summary": "Mengambil Daftar Ajuan Keuangan / Verifikasi Pembayaran UKT (Admin)",
+        "responses": {
+          "200": {
+            "description": "Berhasil mengambil ajuan keuangan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Berhasil mengambil ajuan keuangan." },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "keuangan_id": { "type": "string", "format": "uuid" },
+                          "user_id": { "type": "string", "format": "uuid" },
+                          "nama_lengkap": { "type": "string" },
+                          "nik": { "type": "string" },
+                          "semester": { "type": "integer" },
+                          "tagihan": { "type": "number" },
+                          "status_keuangan": { "type": "string" },
+                          "tanggal_bayar": { "type": "string", "format": "date-time", "nullable": true },
+                          "prodi_nama": { "type": "string", "nullable": true }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" }
+        }
+      }
+    },
+    "/api/admin/keuangan/{keuanganId}/verifikasi": {
+      "put": {
+        "tags": ["Admin: Verifikasi Keuangan"],
+        "summary": "Verifikasi Pembayaran UKT Calon Mahasiswa (Admin)",
+        "parameters": [
+          {
+            "name": "keuanganId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["status"],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": ["lunas", "belum_bayar"],
+                    "example": "lunas"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Berhasil memverifikasi pembayaran UKT."
+          },
+          "400": {
+            "description": "Status verifikasi tidak valid!"
+          },
+          "401": { "description": "Unauthorized" },
+          "403": { "description": "Forbidden" },
+          "404": {
+            "description": "Data tagihan tidak ditemukan!"
+          }
         }
       }
     },

@@ -21,6 +21,10 @@ Repositori ini berisi server backend untuk **Sistem Penerimaan Mahasiswa Baru (P
    - Manajemen CRUD Program Studi dan CRUD Pengumuman Akademik/PMB.
    - Pengelolaan kelulusan pendaftar dan ekspor data dalam format CSV.
    - Fitur keamanan reset kata sandi staff.
+7. **Keamanan & Proteksi API (Security Compliance):**
+   - Proteksi XSS (Cross-Site Scripting) menggunakan HTML entity escaping pada modul forum diskusi dan pengumuman.
+   - HTTP Security Headers terintegrasi dengan Helmet untuk memproteksi aplikasi dari eksploitasi header HTTP.
+   - Perlindungan dari serangan brute-force dan denial-of-service menggunakan Rate Limiting terarah (Auth, Upload, dan API general).
 
 ---
 
@@ -36,6 +40,8 @@ Repositori ini berisi server backend untuk **Sistem Penerimaan Mahasiswa Baru (P
   - `multer` — Penanganan unggahan file berkas fisik
   - `cors` — Perizinan akses lintas domain (Cross-Origin Resource Sharing)
   - `swagger-ui-express` — Penyajian dokumentasi API interaktif
+  - `helmet` — Konfigurasi HTTP Security Headers terstandarisasi untuk Express
+  - `express-rate-limit` — Pengendali laju permintaan untuk pencegahan Brute-Force & Denial-of-Service
 
 ---
 
@@ -49,11 +55,11 @@ backend-pendaftaran-mahasiswa/
 ├── knexfile.ts                   # Konfigurasi koneksi & migrasi database Knex
 ├── package.json                  # File manifest proyek & daftar dependensi
 ├── src/
-│   ├── config/                   # Pengaturan konfigurasi (misal database)
+│   ├── config/                   # Pengaturan konfigurasi (database & XSS sanitizer)
 │   ├── database/
 │   │   └── migrations/           # Riwayat migrasi tabel database PostgreSQL
 │   ├── types/                    # Deklarasi tipe kustom TypeScript (.d.ts)
-│   ├── middlewares/              # Middleware otentikasi (JWT) & upload (Multer)
+│   ├── middlewares/              # Middleware (JWT auth, Multer upload, & rate limiters)
 │   ├── models/                   # Logika query database per objek bisnis (Knex)
 │   ├── controllers/              # Pengontrol logika request & response HTTP
 │   ├── routes/                   # Pendaftaran API endpoint berdasarkan sub-sistem
