@@ -229,10 +229,10 @@ export async function tambahPengumuman(req: Request, res: Response): Promise<Res
       });
     }
 
-    if (kategori !== 'PMB' && kategori !== 'Akademik') {
+    if (kategori !== 'PMB' && kategori !== 'Akademik' && kategori !== 'Administrasi') {
       return res.status(400).json({
         success: false,
-        message: "Kategori harus salah satu dari: 'PMB' atau 'Akademik'!"
+        message: "Kategori harus salah satu dari: 'PMB', 'Akademik', atau 'Administrasi'!"
       });
     }
 
@@ -278,10 +278,10 @@ export async function ubahPengumuman(req: Request, res: Response): Promise<Respo
       dataUpdate.konten = konten;
     }
     if (kategori !== undefined) {
-      if (kategori !== 'PMB' && kategori !== 'Akademik') {
+      if (kategori !== 'PMB' && kategori !== 'Akademik' && kategori !== 'Administrasi') {
         return res.status(400).json({
           success: false,
-          message: "Kategori harus salah satu dari: 'PMB' atau 'Akademik'!"
+          message: "Kategori harus salah satu dari: 'PMB', 'Akademik', atau 'Administrasi'!"
         });
       }
       dataUpdate.kategori = kategori;
