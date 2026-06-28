@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './src/swagger.json';
+import helmet from 'helmet';
 
 // Panggil konfigurasi database jika diperlukan untuk pre-connect
 // import './src/config/db';
@@ -17,6 +18,14 @@ import { apiLimiter, authLimiter, uploadLimiter } from './src/middlewares/rateLi
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Sembunyikan informasi server Express
+app.disable('x-powered-by');
+
+// Tambahkan HTTP Security Headers (kecuali CSP agar tidak mengganggu Swagger UI)
+app.use(helmet({
+  contentSecurityPolicy: false,
+}));
 
 // Aktifkan CORS agar front-end bisa mengakses API
 app.use(cors());
