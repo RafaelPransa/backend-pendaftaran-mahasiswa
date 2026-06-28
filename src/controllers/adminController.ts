@@ -3,6 +3,7 @@ import knex from 'knex';
 import bcrypt from 'bcrypt';
 import config from '../../knexfile';
 import * as AdminModel from '../models/adminModel';
+import { escapeHtml } from '../config/sanitizer';
 
 const db = knex(config.development);
 
@@ -236,7 +237,14 @@ export async function tambahPengumuman(req: Request, res: Response): Promise<Res
       });
     }
 
-    const pengumumanBaru = await AdminModel.createPengumuman({ judul, konten, kategori });
+    const sanitizedJudul = escapeHtml(judul).trim();
+    const sanitizedKonten = escapeHtml(konten).trim();
+
+    const pengumumanBaru = await AdminModel.createPengumuman({
+      judul: sanitizedJudul,
+      konten: sanitizedKonten,
+      kategori
+    });
     return res.status(201).json({
       success: true,
       message: 'Pengumuman baru berhasil ditambahkan!',
@@ -269,13 +277,13 @@ export async function ubahPengumuman(req: Request, res: Response): Promise<Respo
       if (judul.trim() === '') {
         return res.status(400).json({ success: false, message: 'Judul tidak boleh kosong!' });
       }
-      dataUpdate.judul = judul;
+      dataUpdate.judul = escapeHtml(judul).trim();
     }
     if (konten !== undefined) {
       if (konten.trim() === '') {
         return res.status(400).json({ success: false, message: 'Konten tidak boleh kosong!' });
       }
-      dataUpdate.konten = konten;
+      dataUpdate.konten = escapeHtml(konten).trim();
     }
     if (kategori !== undefined) {
       if (kategori !== 'PMB' && kategori !== 'Akademik' && kategori !== 'Administrasi') {

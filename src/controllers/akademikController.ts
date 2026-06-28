@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import * as AkademikModel from '../models/akademikModel';
+import { escapeHtml } from '../config/sanitizer';
 
 // 1. GET /api/akademik/dashboard
 export async function getDashboard(req: Request, res: Response): Promise<Response> {
@@ -298,11 +299,15 @@ export async function buatThread(req: Request, res: Response): Promise<Response>
       });
     }
 
+    const sanitizedJudul = escapeHtml(judul).trim();
+    const sanitizedKonten = escapeHtml(konten).trim();
+    const sanitizedKategori = escapeHtml(kategori).trim();
+
     const newThread = await AkademikModel.createThread({
       user_id: userId,
-      judul,
-      konten,
-      kategori
+      judul: sanitizedJudul,
+      konten: sanitizedKonten,
+      kategori: sanitizedKategori
     });
 
     return res.status(201).json({
@@ -401,10 +406,12 @@ export async function buatBalasan(req: Request, res: Response): Promise<Response
       });
     }
 
+    const sanitizedKonten = escapeHtml(konten).trim();
+
     const newReply = await AkademikModel.createReply({
       thread_id: threadId,
       user_id: userId,
-      konten
+      konten: sanitizedKonten
     });
 
     return res.status(201).json({
