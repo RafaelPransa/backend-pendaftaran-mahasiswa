@@ -13,6 +13,7 @@ import dokumenRoutes from './src/routes/dokumenRoutes';
 import portalRoutes from './src/routes/portalRoutes';
 import akademikRoutes from './src/routes/akademikRoutes';
 import adminRoutes from './src/routes/adminRoutes';
+import { apiLimiter, authLimiter, uploadLimiter } from './src/middlewares/rateLimiter';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -29,10 +30,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'src/public/uploads')));
 // Swagger UI Dokumentasi API
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+// Terapkan rate limiter umum pada prefix /api
+app.use('/api', apiLimiter);
+
 // Daftarkan route
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/dokumen', uploadLimiter, dokumenRoutes);
 app.use('/api/biodata', biodataRoutes);
-app.use('/api/dokumen', dokumenRoutes);
 app.use('/api/portal', portalRoutes);
 app.use('/api/akademik', akademikRoutes);
 app.use('/api/admin', adminRoutes);
