@@ -25,6 +25,7 @@ app.disable('x-powered-by');
 // Tambahkan HTTP Security Headers (kecuali CSP agar tidak mengganggu Swagger UI)
 app.use(helmet({
   contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));
 
 // Aktifkan CORS agar front-end bisa mengakses API
