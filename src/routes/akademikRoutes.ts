@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as akademikController from '../controllers/akademikController';
 import { authenticateToken } from '../middlewares/authMiddleware';
+import upload from '../middlewares/uploadMiddleware';
 
 const router = Router();
 
@@ -30,7 +31,7 @@ router.get('/transkrip', authenticateToken, akademikController.getTranskrip);
 router.get('/keuangan', authenticateToken, akademikController.getKeuangan);
 
 // Endpoint: POST /api/akademik/keuangan/bayar
-router.post('/keuangan/bayar', authenticateToken, akademikController.bayarUkt);
+router.post('/keuangan/bayar', authenticateToken, upload.single('bukti_pembayaran'), akademikController.bayarUkt);
 
 // Feature 6: Forum Diskusi
 // Endpoint: POST /api/akademik/forum/threads

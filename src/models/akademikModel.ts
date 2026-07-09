@@ -317,22 +317,24 @@ export interface KeuanganRecord {
   user_id: string;
   semester: number;
   tagihan: number;
-  status: 'belum_bayar' | 'lunas';
+  status: 'belum_bayar' | 'menunggu_verifikasi' | 'lunas';
+  bukti_pembayaran?: string | null;
   tanggal_bayar: Date | null;
 }
 
 export async function getKeuanganByUserId(userId: string): Promise<any[]> {
   return await db('keuangan')
-    .select('id', 'semester', 'tagihan', 'status', 'tanggal_bayar')
+    .select('id', 'semester', 'tagihan', 'status', 'bukti_pembayaran', 'tanggal_bayar')
     .where({ user_id: userId })
     .orderBy('semester', 'desc');
 }
 
-export async function payUkt(userId: string, semester: number): Promise<any> {
+export async function payUkt(userId: string, semester: number, buktiPembayaran?: string): Promise<any> {
   const [updatedRecord] = await db('keuangan')
     .where({ user_id: userId, semester })
     .update({
       status: 'menunggu_verifikasi',
+      bukti_pembayaran: buktiPembayaran || null,
       updated_at: new Date()
     })
     .returning('*');

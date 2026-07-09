@@ -807,6 +807,7 @@ export async function ambilAjuanKeuangan(req: Request, res: Response): Promise<R
         'keuangan.tagihan',
         'keuangan.status as status_keuangan',
         'keuangan.tanggal_bayar',
+        'keuangan.bukti_pembayaran',
         'p1.nama as prodi_nama'
       )
       .whereIn('keuangan.status', ['menunggu_verifikasi', 'lunas'])

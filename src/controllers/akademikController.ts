@@ -255,7 +255,17 @@ export async function bayarUkt(req: Request, res: Response): Promise<Response> {
       });
     }
 
-    const record = await AkademikModel.payUkt(userId, semesterNum);
+    // Periksa apakah berkas bukti transfer diunggah
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Berkas bukti transfer wajib diunggah!',
+      });
+    }
+
+    const buktiPembayaran = req.file.filename;
+
+    const record = await AkademikModel.payUkt(userId, semesterNum, buktiPembayaran);
     if (!record) {
       return res.status(404).json({
         success: false,
@@ -265,7 +275,7 @@ export async function bayarUkt(req: Request, res: Response): Promise<Response> {
 
     return res.status(200).json({
       success: true,
-      message: `Pembayaran UKT semester ${semesterNum} berhasil!`,
+      message: `Pembayaran UKT semester ${semesterNum} berhasil diajukan!`,
       data: record
     });
   } catch (error) {
