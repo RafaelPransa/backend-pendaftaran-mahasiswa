@@ -601,23 +601,57 @@
     "/api/akademik/keuangan/bayar": {
       "post": {
         "tags": ["Akademik Mahasiswa Aktif"],
-        "summary": "Melakukan Simulasi Pembayaran UKT",
+        "summary": "Mengajukan Pembayaran UKT & Unggah Bukti Transfer",
         "requestBody": {
           "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["nominal"],
+                "required": ["semester", "bukti_pembayaran"],
                 "properties": {
-                  "nominal": { "type": "number", "example": 3500000 }
+                  "semester": {
+                    "type": "string",
+                    "description": "Nomor semester yang ingin dibayar",
+                    "example": "1"
+                  },
+                  "bukti_pembayaran": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Berkas bukti transfer (JPG, JPEG, PNG, PDF)"
+                  }
                 }
               }
             }
           }
         },
         "responses": {
-          "200": { "description": "Pembayaran sukses terekam." }
+          "200": {
+            "description": "Pembayaran UKT berhasil diajukan untuk verifikasi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "Pembayaran UKT semester 1 berhasil diajukan!" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string", "format": "uuid" },
+                        "user_id": { "type": "string", "format": "uuid" },
+                        "semester": { "type": "integer", "example": 1 },
+                        "tagihan": { "type": "number", "example": 3500000 },
+                        "status": { "type": "string", "example": "proses" },
+                        "bukti_pembayaran": { "type": "string", "example": "bukti_pembayaran-171887372.jpg" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Parameter tidak lengkap atau berkas tidak diunggah." }
         }
       }
     },

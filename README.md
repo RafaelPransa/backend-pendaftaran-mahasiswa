@@ -12,7 +12,7 @@ Repositori ini berisi server backend untuk **Sistem Penerimaan Mahasiswa Baru (P
 5. **Portal Akademik Mahasiswa Aktif:**
    - **Kartu Rencana Studi (KRS):** Mengisi, mengedit, dan mengajukan KRS semester berjalan berdasarkan kelas mata kuliah yang tersedia.
    - **Kartu Hasil Studi (KHS) & Transkrip:** Melihat riwayat nilai per semester beserta indeks prestasi kumulatif (IPK).
-   - **Keuangan (UKT):** Mengecek jumlah tagihan, riwayat bayar, dan simulasi pembayaran UKT.
+   - **Keuangan (UKT):** Mengecek jumlah tagihan, riwayat pembayaran, mengunggah bukti pembayaran secara dinamis, serta verifikasi kelayakan akademik otomatis setelah pembayaran lunas.
    - **Forum Diskusi:** Wadah komunikasi akademik berupa pembuatan utas (*threads*) dan komentar balasan (*replies*).
 6. **Portal Administrasi (Admin Panel):**
    - Dashboard analitik grafik pendaftaran dan statistik favorit program studi.
