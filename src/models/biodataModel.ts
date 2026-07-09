@@ -107,7 +107,9 @@ export async function getBiodataWithProdiNames(userId: string): Promise<any> {
     .select(
       'biodata.*',
       'ps1.nama as pilihan_prodi_1_nama',
-      'ps2.nama as pilihan_prodi_2_nama'
+      'ps1.fakultas as pilihan_prodi_1_fakultas',
+      'ps2.nama as pilihan_prodi_2_nama',
+      'ps2.fakultas as pilihan_prodi_2_fakultas'
     )
     .where({ 'biodata.user_id': userId })
     .first();
